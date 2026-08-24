@@ -1,0 +1,18 @@
+# Dependency links (hand-rolled symlinks into the DSH checkout / profile; see FEASIBILITY.md)
+node_modules/
+
+# Generated build output — recreated by `npm run build`. The vendored
+# typert.remote-client.* artifacts under lib/ are NOT generated (they are
+# maintained by hand) and therefore remain tracked.
+**/lib/types/
+**/lib/index.js
+**/lib/invariant.js
+**/lib/client.js
+**/lib/client.js.map
+**/*.tsbuildinfo
+
+# OS noise
+.DS_Store
+# Generated tsconfig shims pointing at the local DSH checkout (npm run bootstrap)
+tsconfig.dsh.generated.json
+tsconfig.dsh.client.generated.json

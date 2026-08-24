@@ -1,0 +1,15 @@
+{
+  "extends": "../../../tsconfig.dsh.client.generated.json",
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "paths": {
+      "@deepseek-ai/dsh-plugins-scheduled-task/remote": ["../host/lib/typert.remote-client.d.ts"],
+      "@deepseek-ai/dsh-plugins-scheduled-task/types": ["../host/lib/types/types.d.ts"]
+    }
+  },
+  "include": ["src"]
+}

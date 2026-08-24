@@ -1,0 +1,5 @@
+# One workspace package per plugin half: packages/<plugin>/host (node side)
+# and packages/<plugin>/client (browser side). Mirrors the DSH repo's own
+# `packages/*/*` workspace glob.
+packages:
+  - packages/*/*

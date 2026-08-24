@@ -1,0 +1,18 @@
+{
+  "name": "dsh-plugins",
+  "version": "0.1.0",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "description": "User-authored external plugins for DeepSeek Harness, loaded via a dsh profile (no changes to the dsh library). Each plugin lives under packages/<plugin>/ with a host half and a client half.",
+  "scripts": {
+    "build": "npm run build:host && npm run build:client",
+    "build:host": "node node_modules/typescript/lib/tsc.js -b tsconfig.host.json",
+    "build:client": "node node_modules/typescript/lib/tsc.js -b tsconfig.client.json",
+    "typecheck": "npm run build:host && npm run build:client",
+    "bootstrap": "node scripts/bootstrap.mjs",
+    "verify": "node scripts/verify-remote.mjs",
+    "test": "node scripts/test.mjs",
+    "gen:typert": "node scripts/gen-typert.mjs"
+  }
+}

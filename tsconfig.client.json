@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.dsh.client.generated.json",
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "paths": {}
+  },
+  "files": [],
+  "references": [
+    { "path": "./packages/scheduled-task/client" },
+    { "path": "./packages/scheduled-task/remotes" }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig.dsh.generated.json",
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "types": ["node"],
+    "paths": {}
+  },
+  "include": ["src"]
+}

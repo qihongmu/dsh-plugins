@@ -1,0 +1,46 @@
+{
+  "name": "@deepseek-ai/dsh-client-remotes-scheduled-task",
+  "version": "0.1.0",
+  "license": "MIT",
+  "description": "External user plugin: browser assembly that mounts the vendored scheduledTasks Remote contribution before the scheduled-tasks UI entry activates (plugin-scoped counterpart of the in-repo dsh-api-remotes assembly).",
+  "private": true,
+  "type": "module",
+  "main": "lib/types/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/types/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/types/invariant.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-api-gateway"
+      ],
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-api-gateway": "*",
+    "@deepseek-ai/dsh-api-remotes": "*",
+    "@deepseek-ai/dsh-plugins-scheduled-task": "*",
+    "@deepseek-ai/dsh-typert-protocol": "*"
+  }
+}
