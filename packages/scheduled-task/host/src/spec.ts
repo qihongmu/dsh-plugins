@@ -82,6 +82,11 @@ export const scheduledTaskRecord = z.object({
   confirmBeforeChange: z.boolean(),
   lastRunAt: z.string().optional(),
   lastReadAt: z.string().optional(),
+  /** Failure of the most recent run-admission attempt, if it did not succeed. */
+  lastError: z.object({
+    at: z.string(),
+    message: z.string().min(1),
+  }).optional(),
 })
 
 /** One stored task record, inferred from {@link scheduledTaskRecord}. */

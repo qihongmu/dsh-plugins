@@ -377,7 +377,10 @@ export function advanceRule(rule: ScheduledTaskRule, runAt: number): ScheduledTa
  * @returns The complete client-facing view.
  */
 export function scheduledTaskView(record: ScheduledTaskRecord, now: number): ScheduledTaskView {
-  const nextRunAt = record.status === 'completed' ? undefined : record.rule.scheduledAt
+  // A paused task has no scheduled next run: its stored `scheduledAt` stays at
+  // the moment it was paused (catch-up on resume), which would render as a past
+  // "next run" — hide it instead.
+  const nextRunAt = record.status === 'active' ? record.rule.scheduledAt : undefined
   const overdue = record.status === 'active' && nextRunAt !== undefined && now >= Date.parse(nextRunAt)
   const unread = record.lastRunAt !== undefined
     && (record.lastReadAt === undefined || Date.parse(record.lastRunAt) > Date.parse(record.lastReadAt))
@@ -395,6 +398,7 @@ export function scheduledTaskView(record: ScheduledTaskRecord, now: number): Sch
     ...record.model === undefined ? {} : { model: record.model },
     ...record.lastRunAt === undefined ? {} : { lastRunAt: record.lastRunAt },
     ...nextRunAt === undefined ? {} : { nextRunAt },
+    ...record.lastError === undefined ? {} : { lastError: record.lastError },
     state: overdue ? 'overdue' : 'scheduled',
     unread,
   })

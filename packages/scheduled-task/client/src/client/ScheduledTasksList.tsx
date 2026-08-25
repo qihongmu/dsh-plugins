@@ -153,6 +153,11 @@ export function ScheduledTasksList({
                       <span className={css.rowNext}>{t('row.next', { time: localizedDate(task.nextRunAt) })}</span>
                     )}
                     {task.state === 'overdue' && <span className={css.rowOverdue}>{t('row.state.overdue')}</span>}
+                    {task.lastError !== undefined && (
+                      <span className={css.rowLastError} title={`${task.lastError.at} — ${task.lastError.message}`}>
+                        {t('row.lastError')}
+                      </span>
+                    )}
                     <span className={css.rowStatus} data-state={task.state}>{t(STATUS_LABELS[task.status])}</span>
                   </div>
                 </div>

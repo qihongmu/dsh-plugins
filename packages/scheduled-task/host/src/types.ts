@@ -178,6 +178,16 @@ export interface ScheduledTaskView {
   nextRunAt?: string
   state: ScheduledTaskState
   unread: boolean
+  /** Failure of the most recent run-admission attempt, if it did not succeed. */
+  lastError?: ScheduledTaskRunError
+}
+
+/** One failed run admission (session creation/queueing), kept for surfacing. */
+export interface ScheduledTaskRunError {
+  /** ISO-8601 instant of the failure. */
+  at: string
+  /** Rendered failure message (process-side diagnostics wording). */
+  message: string
 }
 
 /** Closed v1 management error codes. */

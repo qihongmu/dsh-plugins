@@ -65,6 +65,20 @@ describe('scheduledTaskRecord schema', () => {
     }
   })
 
+  it('accepts a record with lastError and rejects an empty failure message', () => {
+    const rule = { kind: 'at', scheduledAt: '2026-03-07T01:00:00.000Z' }
+    const ok = scheduledTaskRecord.safeParse({
+      ...BASE,
+      rule,
+      lastError: { at: '2026-03-06T04:12:33.000Z', message: 'provider "openrouter" has no configured model' },
+    })
+    assert.ok(ok.success)
+    assert.equal(ok.data.lastError?.message.includes('openrouter'), true)
+
+    const bad = scheduledTaskRecord.safeParse({ ...BASE, rule, lastError: { at: 'x', message: '' } })
+    assert.ok(!bad.success)
+  })
+
   it('rejects empty title/prompt, bad status, and missing confirm flag', () => {
     for (const patch of [
       { title: '' },

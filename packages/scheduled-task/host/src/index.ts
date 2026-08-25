@@ -104,6 +104,8 @@ export class ScheduledTaskService extends TypertRemoteService {
   private readonly appliedTitles = new Map<SessionId, string>()
   /** Run sessions already attached to their bound workspace (avoids re-attach churn). */
   private readonly attachedSessions = new Set<string>()
+  /** Consecutive admission failures per task, backing off the next retry. */
+  private readonly failures = new Map<ScheduledTaskIdType, { count: number; retryAfter: number }>()
   private stopping = false
 
   constructor(ctx: Context) {
@@ -226,6 +228,7 @@ export class ScheduledTaskService extends TypertRemoteService {
           this.handles.delete(id)
           await handle.dispose()
         }
+        this.failures.delete(id)
         this.rearm()
       }
       return { ok: true, deleted }
@@ -289,10 +292,14 @@ export class ScheduledTaskService extends TypertRemoteService {
   /** Fire every currently due active task, then re-arm. */
   private async fireDue(now: number): Promise<void> {
     if (this.stopping) return
-    for (const [id, record] of this.requireTable().entries()) {
-      if (!isDue(record, now)) continue
-      await this.fireOne(id, record, now)
-    }
+    const due = [...this.requireTable().entries()].filter(([id, record]) => {
+      if (!isDue(record, now)) return false
+      // Tasks in failure backoff wait for their retry window even while the
+      // stored schedule instant is still in the past.
+      return (this.failures.get(id)?.retryAfter ?? 0) <= now
+    })
+    // Fire independently: one hanging admission must not delay the others.
+    await Promise.allSettled(due.map(([id, record]) => this.fireOne(id, record, now)))
     this.rearm()
   }
 
@@ -320,11 +327,30 @@ export class ScheduledTaskService extends TypertRemoteService {
         rule: advanced ?? record.rule,
         status: advanced === undefined ? 'completed' : record.status,
         lastRunAt: runAt,
+        lastError: undefined,
       }
+      this.failures.delete(id)
       await this.requireTable().put(id, next)
       await this.ctx.sessions.flush(agent.session)
     } catch (error: unknown) {
-      this.ctx.logger.warn(`scheduled-task: could not fire task "${id}": ${renderThrown(error)}`)
+      const message = renderThrown(error)
+      this.ctx.logger.warn(`scheduled-task: could not fire task "${id}": ${message}`)
+      // Record the failure on the task and back off the retry (30s doubling to
+      // 5min) so a persistently failing admission does not hot-loop while its
+      // schedule instant stays in the past. In-memory only; a restart retries
+      // immediately.
+      const previous = this.failures.get(id)?.count ?? 0
+      const count = previous + 1
+      const retryAfter = now + Math.min(30_000 * 2 ** (count - 1), 300_000)
+      this.failures.set(id, { count, retryAfter })
+      try {
+        await this.requireTable().put(id, {
+          ...record,
+          lastError: { at: new Date(now).toISOString(), message },
+        })
+      } catch (persistError: unknown) {
+        this.ctx.logger.warn(`scheduled-task: could not persist failure of task "${id}": ${renderThrown(persistError)}`)
+      }
     }
   }
 

@@ -274,4 +274,26 @@ describe('projection helpers', () => {
     assert.equal(dueView.unread, false)
     assert.equal(dueView.state, 'overdue')
   })
+
+  it('hides nextRunAt for paused tasks and surfaces lastError', () => {
+    // Paused at a past instant: the stored schedule would render as a stale
+    // "next run", so the projection must omit it until the task resumes.
+    const paused: ScheduledTaskRecord = {
+      ...record,
+      status: 'paused',
+      rule: { ...record.rule, scheduledAt: new Date(NOW - HOUR).toISOString() },
+    }
+    const pausedView = scheduledTaskView(paused, NOW)
+    assert.equal(pausedView.nextRunAt, undefined)
+    assert.equal(pausedView.state, 'scheduled')
+    assert.equal('lastError' in pausedView, false)
+
+    const failed: ScheduledTaskRecord = {
+      ...record,
+      lastError: { at: new Date(NOW).toISOString(), message: 'boom' },
+    }
+    const failedView = scheduledTaskView(failed, NOW)
+    assert.deepEqual(failedView.lastError, { at: new Date(NOW).toISOString(), message: 'boom' })
+    assert.equal(scheduledTaskView(record, NOW).lastError, undefined)
+  })
 })

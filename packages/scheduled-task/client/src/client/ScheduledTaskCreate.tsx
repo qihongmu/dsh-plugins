@@ -274,6 +274,9 @@ export function ScheduledTaskCreate({
             onDayOfMonthChange={(value) => { patchSchedule({ dayOfMonth: value }) }}
             onClear={() => { patchSchedule({ preset: '' }) }}
           />
+          {!selectorValid && (
+            <span className={css.fieldHint}>{preset === '' ? t('form.schedule.required') : t('form.schedule.invalid')}</span>
+          )}
         </div>
         {preset === 'custom' && (
           <div className={`${css.formBody} ${css.customGroup}`}>

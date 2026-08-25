@@ -449,6 +449,20 @@
   color: var(--dsw-alias-state-warn-label);
 }
 
+.rowLastError {
+  flex: none;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--dsw-alias-state-error-primary, var(--dsw-alias-state-warn-label));
+  cursor: help;
+}
+
+.fieldHint {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--dsw-alias-state-error-primary, var(--dsw-alias-state-warn-label));
+}
+
 .rowStatus {
   flex: none;
   display: inline-flex;

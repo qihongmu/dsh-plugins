@@ -61,6 +61,10 @@ const $taskView = z.object({
   'createdAt': z.string(),
   'lastRunAt': z.string().optional(),
   'nextRunAt': z.string().optional(),
+  'lastError': z.object({
+    at: z.string(),
+    message: z.string().min(1),
+  }).optional(),
   'state': $state,
   'unread': z.boolean(),
   'workspaceId': z.string().optional(),
