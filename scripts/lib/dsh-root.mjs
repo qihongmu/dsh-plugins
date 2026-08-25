@@ -27,7 +27,11 @@ export function resolveDshRoot() {
   if (process.env.DSH_ROOT !== undefined && process.env.DSH_ROOT !== '') {
     candidates.push(resolve(process.env.DSH_ROOT))
   }
+  // A sibling of THIS repository (the classic layout), or a copy cloned INSIDE
+  // the repository (what CI uses — actions/checkout cannot write outside the
+  // workspace). Both are ignored by git.
   candidates.push(resolve(repoRoot, '..', 'deepseek-harness'))
+  candidates.push(resolve(repoRoot, 'deepseek-harness'))
   for (const candidate of candidates) {
     if (existsSync(join(candidate, 'package.json'))) return candidate
   }
@@ -35,8 +39,9 @@ export function resolveDshRoot() {
     'Cannot locate a DeepSeek Harness checkout.\n'
     + 'This workspace builds against a local clone of https://github.com/deepseek-ai/deepseek-harness.\n'
     + 'Either:\n'
-    + '  - export DSH_ROOT=/path/to/deepseek-harness   (a built checkout), or\n'
+    + '  - export DSH_ROOT=/path/to/deepseek-harness   (a built checkout),\n'
     + `  - clone it as a sibling:  git clone https://github.com/deepseek-ai/deepseek-harness ${resolve(repoRoot, '..', 'deepseek-harness')}\n`
+    + `  - or inside this repo:    git clone https://github.com/deepseek-ai/deepseek-harness ${resolve(repoRoot, 'deepseek-harness')}\n`
     + 'then re-run:  npm run bootstrap',
   )
 }

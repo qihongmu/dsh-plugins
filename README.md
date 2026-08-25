@@ -64,7 +64,7 @@ installed `node_modules` provides the toolchain — neither is published to npm)
 
 ```sh
 # 1. get a built DSH next to this repo (or anywhere, then export DSH_ROOT)
-git clone https://github.com/deepseek-ai/deepseek-harness ../deepseek-harness
+git clone https://github.com/deepseek-ai/deepseek-harness ../deepseek-harness   # or inside this repo as ./deepseek-harness (what CI does)
 cd ../deepseek-harness && pnpm install && pnpm build && cd -
 
 # 2. link dependencies + generate tsconfig shims (idempotent)
@@ -87,6 +87,7 @@ Tooling resolves from this repo's root `node_modules` (symlinks created by
 ```sh
 npm run build       # tsc -b tsconfig.host.json && tsc -b tsconfig.client.json
 npm run typecheck   # alias of build
+npm run ci:local    # recreate the CI `gates` job in a clean temp copy (run before pushing)
 npm run test        # node:test unit suites (host domain + record schema)
 npm run verify      # load every host package in Node and print its Remote surface
 npm run gen:typert  # probe the DSH typert generator against this workspace

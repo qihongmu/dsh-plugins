@@ -47,8 +47,11 @@ const SCOPED_PACKAGES = [
   'dsh-workspace',
 ]
 
-/** Unscoped toolchain/runtime packages linked from the DSH install tree. */
+/** Toolchain/runtime packages discovered in the DSH install tree. */
 const TOP_LEVEL_PACKAGES = [
+  '@types/node',
+  '@types/react',
+  '@types/react-dom',
   'lightningcss',
   'react',
   'tsdown',

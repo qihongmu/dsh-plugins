@@ -16,3 +16,6 @@ node_modules/
 # Generated tsconfig shims pointing at the local DSH checkout (npm run bootstrap)
 tsconfig.dsh.generated.json
 tsconfig.dsh.client.generated.json
+
+# An in-repo DSH checkout used by CI (actions/checkout cannot leave the workspace)
+deepseek-harness/

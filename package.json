@@ -18,6 +18,7 @@
     "bootstrap": "node scripts/bootstrap.mjs",
     "verify": "node scripts/verify-remote.mjs",
     "test": "node scripts/test.mjs",
+    "ci:local": "bash scripts/ci-local.sh",
     "gen:typert": "node scripts/gen-typert.mjs"
   }
 }
