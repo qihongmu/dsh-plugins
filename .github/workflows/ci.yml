@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The workspace builds against a local DeepSeek Harness checkout:
+      # clone it as the sibling directory `npm run bootstrap` expects.
+      - name: Check out DeepSeek Harness
+        uses: actions/checkout@v4
+        with:
+          repository: deepseek-ai/deepseek-harness
+          path: deepseek-harness
+
+      - uses: pnpm/action-setup@v4
+        with:
+          working-directory: deepseek-harness
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Build DeepSeek Harness (provides toolchain + resolution facade)
+        working-directory: deepseek-harness
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - name: Bootstrap plugin workspace
+        run: npm run bootstrap
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Remote surface verify
+        run: npm run verify

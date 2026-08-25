@@ -2,6 +2,12 @@
   "name": "@deepseek-ai/dsh-client-ui-scheduled-task",
   "version": "0.1.0",
   "license": "MIT",
+  "author": "Qihong <qihong.m.u@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qihongmu/dsh-plugins.git",
+    "directory": "packages/scheduled-task/client"
+  },
   "description": "External user plugin: scheduled-tasks sidebar panel (browser half), self-mounts the scheduledTasks Remote via ctx.remote.$mount. No changes to the dsh library.",
   "private": true,
   "type": "module",

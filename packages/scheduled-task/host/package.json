@@ -2,6 +2,12 @@
   "name": "@deepseek-ai/dsh-plugins-scheduled-task",
   "version": "0.1.0",
   "license": "MIT",
+  "author": "Qihong <qihong.m.u@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qihongmu/dsh-plugins.git",
+    "directory": "packages/scheduled-task/host"
+  },
   "description": "External user plugin: global scheduled tasks for DeepSeek Harness (host Service + scheduler + Remote surface), no changes to the dsh library.",
   "private": true,
   "type": "module",

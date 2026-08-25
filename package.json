@@ -2,6 +2,11 @@
   "name": "dsh-plugins",
   "version": "0.1.0",
   "license": "MIT",
+  "author": "Qihong <qihong.m.u@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qihongmu/dsh-plugins.git"
+  },
   "private": true,
   "type": "module",
   "description": "User-authored external plugins for DeepSeek Harness, loaded via a dsh profile (no changes to the dsh library). Each plugin lives under packages/<plugin>/ with a host half and a client half.",

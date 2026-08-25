@@ -2,6 +2,12 @@
   "name": "@deepseek-ai/dsh-client-remotes-scheduled-task",
   "version": "0.1.0",
   "license": "MIT",
+  "author": "Qihong <qihong.m.u@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qihongmu/dsh-plugins.git",
+    "directory": "packages/scheduled-task/remotes"
+  },
   "description": "External user plugin: browser assembly that mounts the vendored scheduledTasks Remote contribution before the scheduled-tasks UI entry activates (plugin-scoped counterpart of the in-repo dsh-api-remotes assembly).",
   "private": true,
   "type": "module",
