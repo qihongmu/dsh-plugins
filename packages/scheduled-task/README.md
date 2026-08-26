@@ -1,41 +1,53 @@
-# @deepseek-ai/dsh-plugins-scheduled-task
+# Scheduled Tasks
 
-Global scheduled tasks for DeepSeek Harness as a **pure external plugin**:
-register a task once (instruction + schedule) and the host fires it into its
-own conversation on schedule.
+A global scheduler for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): write an instruction once, and the assistant runs it on your schedule — every hour / day / week / month, at a specific time, or after a delay — each run in its own conversation.
 
-## Packages
+## Opening the panel
 
-| Half | Package | Role |
-|------|---------|------|
-| `host/` | `@deepseek-ai/dsh-plugins-scheduled-task` | Durable registry (storage-domain table), scheduler, run-session delivery, `scheduledTasks/*` Remote surface |
-| `remotes/` | `@deepseek-ai/dsh-client-remotes-scheduled-task` | Browser-side Remote mount (vendored typert client schema) |
-| `client/` | `@deepseek-ai/dsh-client-ui-scheduled-task` | Sidebar trigger + right drawer: list/search/filters, inline schedule editor, create/edit form |
+Click the **Scheduled Tasks** trigger in the sidebar to open the drawer.
 
-## Schedule selectors
+## Creating a task
 
-One-shot: `after_seconds`, `at` (absolute local calendar), `every_seconds`
-(fixed rate ≥ 300s from creation). Wall-clock presets with IANA time zones:
-`hourly {minute}`, `daily {time,tz}`, `weekly {weekdays 1=Mon..7,time,tz}`,
-`monthly {dayOfMonth,time,tz}` (months without the day are skipped; DST-skipped
-local times march to the next day).
+In the drawer, click **Create** and fill in:
 
-Run sessions derive per task+project (`task-<id>-<cwd-hash>`): editing the
-project starts a fresh conversation inside the new workspace; returning to an
-earlier project re-attaches that project's history. Titles are pinned to the
-task title via the session-title service.
+| Field | Meaning |
+| ----- | ------- |
+| **Title** | A short label. If left blank, the first 40 characters of the instruction are used. |
+| **Schedule** | One of the presets below. |
+| **Instruction** | What the assistant should do when the task fires. |
+| **Project** | Which workspace/project directory the task runs in (optional — the default directory is used when unset). |
+| **Model** | Which model to run with (optional — the default model is used when unset). |
+| **Confirm before changes** | When enabled, each run asks for confirmation before sensitive actions such as writes. |
 
-## Development
+### Schedule presets
 
-From the repository root (see ../README.md "Setup"):
+- **Every hour** — at a chosen minute (0–59).
+- **Every day** — at a wall-clock time.
+- **Every week** — at a time on one or more selected weekdays.
+- **Every month** — on a day of the month (months without that day are skipped).
+- **Custom**
+  - **At a time** — a specific date and time (runs once).
+  - **After a delay** — runs once after a number of seconds.
 
-```sh
-npm run bootstrap   # link against your local DeepSeek Harness checkout
-npm run build && npm test && npm run verify
-```
+The timezone is shown as a GMT offset (e.g. `GMT+8`). Click it to edit the underlying IANA region (e.g. `Asia/Shanghai`).
 
-Unit suites live in `host/tests/` (domain math, record schema, service
-behavior) and `client/tests/` (formatting helpers). The vendored typert
-artifacts — `host/lib/typert.remote-client.d.ts` and
-`remotes/src/client/remote-client.js` — mirror `host/src/types.ts` by hand;
-update both together with any wire-model change.
+## Managing tasks
+
+- **Pause / Resume** — stop or continue a recurring task.
+- **Edit** — change the title, schedule, project, model, or confirmation setting.
+- **Delete** — remove the task and its live run session.
+- **Mark read** — click a row to clear its unread badge.
+- **Search / Filter** — find tasks by title, or filter by All / Active / Paused.
+
+### Status indicators
+
+- **Unread dot** — the task ran and you haven't read it yet.
+- **Overdue** — a recurring task is past its scheduled time (it fires on the next tick).
+- **Last run failed** — the previous run could not start (hover for the error); the task retries automatically with backoff.
+- **Completed** — a one-shot task that has already fired.
+
+## Notes
+
+- Every task runs in its own conversation, titled with the task title.
+- Each task runs under its bound **Project**: changing the project starts a fresh conversation in the new workspace, and switching back re-attaches the old conversation.
+- Wall-clock presets follow the selected timezone's daylight-saving rules — a skipped local time (e.g. spring-forward) moves to the next day.

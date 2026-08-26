@@ -6,9 +6,9 @@ Thanks for your interest in improving the DSH external plugins!
 
 - Node.js 22+
 - A local clone of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness),
-  installed and built (`pnpm install && pnpm build`) — see the README
-  [Setup](README.md#setup) section. The workspace resolves toolchain and
-  `@deepseek-ai/*` packages from that checkout; nothing is published to npm.
+  installed and built (`pnpm install && pnpm build`). The workspace resolves
+  toolchain and `@deepseek-ai/*` packages from that checkout; nothing is
+  published to npm.
 
 ## Development loop
 
