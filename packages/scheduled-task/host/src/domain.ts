@@ -71,16 +71,26 @@ export function validatePrompt(prompt: unknown): string {
   return prompt.trim()
 }
 
+/** Normalize a bare `HH:mm` to the `HH:mm:ss` the shipped builder demands. */
+function normalizeTime(time: string): string {
+  return /^\d{2}:\d{2}$/.test(time) ? `${time}:00` : time
+}
+
 /** Validate an absolute local-calendar selector shape. */
 function validateAt(at: unknown): { date: string; time: string; time_zone: string } {
   if (!isRecord(at) || typeof at['date'] !== 'string' || typeof at['time'] !== 'string'
     || typeof at['time_zone'] !== 'string') {
     throw new ScheduledTaskError('invalid_rule', 'at must contain exactly date, time, and time_zone strings.')
   }
-  // The shipped builder demands `HH:mm:ss`; the UI time input yields bare
-  // `HH:mm`, so normalize here (mirrors `atInstant`).
-  const time = /^\d{2}:\d{2}$/.test(at['time']) ? `${at['time']}:00` : at['time']
-  return { date: at['date'], time, time_zone: at['time_zone'] }
+  return { date: at['date'], time: normalizeTime(at['time']), time_zone: at['time_zone'] }
+}
+
+/** Assert a non-empty IANA time-zone string for one wall-clock preset. */
+function validateTimeZone(value: unknown, preset: 'daily' | 'weekly' | 'monthly'): string {
+  if (typeof value !== 'string' || value.trim() === '') {
+    throw new ScheduledTaskError('invalid_rule', `${preset} requires a time_zone string.`)
+  }
+  return value
 }
 
 /** Translate one contained `dsh-schedule` builder failure to the closed task error union. */
@@ -111,8 +121,7 @@ const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/
 
 /** Convert `date` (YYYY-MM-DD) + `time` (HH:mm or HH:mm:ss) in `timeZone` to canonical epoch ms. */
 function atInstant(date: string, time: string, timeZone: string, now: number): number {
-  const normalized = /^\d{2}:\d{2}$/.test(time) ? `${time}:00` : time
-  const record = createAtScheduleRecord(ScheduleId('task'), 'task', { date, time: normalized, time_zone: timeZone }, now)
+  const record = createAtScheduleRecord(ScheduleId('task'), 'task', { date, time: normalizeTime(time), time_zone: timeZone }, now)
   return Date.parse(record.scheduledAt)
 }
 
@@ -126,6 +135,13 @@ function tryInstant(date: string, time: string, timeZone: string, now: number): 
     return atInstant(date, time, timeZone, now)
   } catch (caught: unknown) {
     if (caught instanceof ScheduleInputError && caught.code === 'not_future') return undefined
+    // DST spring-forward: a local wall-clock time can be SKIPPED entirely
+    // (e.g. America/New_York 02:30 on the transition day). The shipped builder
+    // reports that as invalid_rule "The local at time does not exist…" — treat
+    // it as a miss so the caller marches to the next candidate day instead of
+    // failing the whole rule.
+    if (caught instanceof ScheduleInputError && caught.code === 'invalid_rule'
+      && caught.message.includes('does not exist')) return undefined
     throw caught
   }
 }
@@ -258,28 +274,19 @@ export function buildRule(
   }
   if (input.daily !== undefined) {
     const time = validateTime(input.daily.time)
-    if (typeof input.daily.time_zone !== 'string' || input.daily.time_zone.trim() === '') {
-      throw new ScheduledTaskError('invalid_rule', 'daily requires a time_zone string.')
-    }
-    return {
-      kind: 'daily',
-      time,
-      time_zone: input.daily.time_zone,
-      scheduledAt: firstDaily(time, input.daily.time_zone, now),
-    }
+    const timeZone = validateTimeZone(input.daily.time_zone, 'daily')
+    return { kind: 'daily', time, time_zone: timeZone, scheduledAt: firstDaily(time, timeZone, now) }
   }
   if (input.weekly !== undefined) {
     const weekdays = validateWeekdays(input.weekly.weekdays)
     const time = validateTime(input.weekly.time)
-    if (typeof input.weekly.time_zone !== 'string' || input.weekly.time_zone.trim() === '') {
-      throw new ScheduledTaskError('invalid_rule', 'weekly requires a time_zone string.')
-    }
+    const timeZone = validateTimeZone(input.weekly.time_zone, 'weekly')
     return {
       kind: 'weekly',
       weekdays,
       time,
-      time_zone: input.weekly.time_zone,
-      scheduledAt: firstWeekly(weekdays, time, input.weekly.time_zone, now),
+      time_zone: timeZone,
+      scheduledAt: firstWeekly(weekdays, time, timeZone, now),
     }
   }
   if (input.monthly !== undefined) {
@@ -288,15 +295,13 @@ export function buildRule(
       throw new ScheduledTaskError('time_out_of_range', 'monthly dayOfMonth must be an integer 1-31.')
     }
     const time = validateTime(input.monthly.time)
-    if (typeof input.monthly.time_zone !== 'string' || input.monthly.time_zone.trim() === '') {
-      throw new ScheduledTaskError('invalid_rule', 'monthly requires a time_zone string.')
-    }
+    const timeZone = validateTimeZone(input.monthly.time_zone, 'monthly')
     return {
       kind: 'monthly',
       dayOfMonth,
       time,
-      time_zone: input.monthly.time_zone,
-      scheduledAt: firstMonthly(dayOfMonth, time, input.monthly.time_zone, now),
+      time_zone: timeZone,
+      scheduledAt: firstMonthly(dayOfMonth, time, timeZone, now),
     }
   }
   return undefined
@@ -370,6 +375,15 @@ export function advanceRule(rule: ScheduledTaskRule, runAt: number): ScheduledTa
   }
 }
 
+/** Spread-only-defined helper for view projection. */
+function pickDefined<T extends object>(source: T): { [K in keyof T]-?: NonNullable<T[K]> } | Record<string, never> {
+  const out: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries(source)) {
+    if (value !== undefined) out[key] = value
+  }
+  return out as { [K in keyof T]-?: NonNullable<T[K]> }
+}
+
 /**
  * Derive one client-facing view from the durable record and wall clock.
  * @param record - Durable task record.
@@ -393,13 +407,17 @@ export function scheduledTaskView(record: ScheduledTaskRecord, now: number): Sch
     sessionId: record.sessionId,
     createdAt: record.createdAt,
     confirmBeforeChange: record.confirmBeforeChange,
-    ...record.workspaceId === undefined ? {} : { workspaceId: record.workspaceId },
-    ...record.cwd === undefined ? {} : { cwd: record.cwd },
-    ...record.model === undefined ? {} : { model: record.model },
-    ...record.lastRunAt === undefined ? {} : { lastRunAt: record.lastRunAt },
-    ...nextRunAt === undefined ? {} : { nextRunAt },
-    ...record.lastError === undefined ? {} : { lastError: record.lastError },
-    state: overdue ? 'overdue' : 'scheduled',
+    ...pickDefined({
+      workspaceId: record.workspaceId,
+      cwd: record.cwd,
+      model: record.model,
+      lastRunAt: record.lastRunAt,
+      nextRunAt,
+      lastError: record.lastError,
+    }),
+    // A completed task has no phase left to advertise; `scheduled`/`overdue`
+    // only describe a live schedule.
+    state: record.status === 'completed' ? 'completed' : overdue ? 'overdue' : 'scheduled',
     unread,
   })
 }

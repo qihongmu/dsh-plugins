@@ -60,6 +60,28 @@ function renderThrown(value: unknown): string {
 }
 
 /**
+ * Retry delay after `count` consecutive admission failures: 30s doubling,
+ * capped at 5 minutes. Exported pure for tests.
+ */
+export function admissionBackoffMs(count: number): number {
+  return Math.min(30_000 * 2 ** (count - 1), 300_000)
+}
+
+/**
+ * Whether a resume failure means the run session simply is not persisted yet
+ * (first run of this task+project pair) — the only case where falling back to
+ * `create` is safe. Any other failure is rethrown so it surfaces as a visible
+ * task error instead of silently re-creating a session under the same id.
+ *
+ * The upstream agents service has no stable machine-readable "missing session"
+ * contract, so this matches the human-readable phrasings it emits today.
+ */
+function isMissingSessionError(error: unknown): boolean {
+  return /\bnot found\b|\bdoes not exist\b|\bno such session\b|\bunknown session\b/
+    .test(renderThrown(error).toLowerCase())
+}
+
+/**
  * Deterministic run-session identity for one task+project pair. Deriving the id
  * from the cwd makes a project edit migrate the task to a FRESH conversation in
  * the new workspace (workspace listings index sessions by their header's
@@ -341,7 +363,7 @@ export class ScheduledTaskService extends TypertRemoteService {
       // immediately.
       const previous = this.failures.get(id)?.count ?? 0
       const count = previous + 1
-      const retryAfter = now + Math.min(30_000 * 2 ** (count - 1), 300_000)
+      const retryAfter = now + admissionBackoffMs(count)
       this.failures.set(id, { count, retryAfter })
       try {
         await this.requireTable().put(id, {
@@ -424,7 +446,8 @@ export class ScheduledTaskService extends TypertRemoteService {
         resumeSessionId: targetId,
         ...agentOptions === undefined ? {} : { agentOptions },
       })
-    } catch {
+    } catch (resumeError: unknown) {
+      if (!isMissingSessionError(resumeError)) throw resumeError
       // Not persisted yet (first run for this task+project pair): create it in-project.
       handle = await this.ctx.agents.create({
         sessionId: targetId,

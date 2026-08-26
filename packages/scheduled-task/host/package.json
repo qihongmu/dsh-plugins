@@ -27,8 +27,7 @@
       "default": "./lib/types/types.js"
     },
     "./remote": {
-      "types": "./lib/typert.remote-client.d.ts",
-      "default": "./lib/typert.remote-client.js"
+      "types": "./lib/typert.remote-client.d.ts"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"

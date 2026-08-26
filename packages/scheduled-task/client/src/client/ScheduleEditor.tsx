@@ -2,13 +2,14 @@
  * Inline schedule editor (图 of 调度): a preset dropdown (每小时/每天/每周/每月/自定义)
  * followed per preset by compact sub-selectors, a live summary line, and a
  * clear (trash) action. Controlled by the parent create form, which owns the
- * state and turns the chosen preset into a wire rule selector. 自定义 keeps the
- * parent's own at/after/every fields, so this editor renders them through the
- * `customSlot` and only drives the preset selector for the wall-clock presets.
+ * state and turns the chosen preset into a wire rule selector. The wall-clock
+ * presets carry an editable IANA time-zone field; the custom presets keep
+ * their own at/after/every fields in the parent.
  */
 
 import { useRef, useState } from 'react'
 import { IconChevronDownOutline14, IconTrashOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { weekdaySummary } from './format.ts'
 import type { ScheduledTaskTranslate } from './format.ts'
 import type { ScheduledTaskKey } from './locales.ts'
 import css from './ScheduledTasksPanel.module.css'
@@ -17,7 +18,7 @@ import css from './ScheduledTasksPanel.module.css'
 export type SchedulePreset = '' | 'hourly' | 'daily' | 'weekly' | 'monthly' | 'custom'
 
 /** Locale key per weekday (1=Mon..7=Sun). */
-const WEEKDAY_KEYS: Record<number, string> = {
+const WEEKDAY_KEYS: Record<number, ScheduledTaskKey> = {
   1: 'schedule.wd.1', 2: 'schedule.wd.2', 3: 'schedule.wd.3', 4: 'schedule.wd.4',
   5: 'schedule.wd.5', 6: 'schedule.wd.6', 7: 'schedule.wd.7',
 }
@@ -53,7 +54,7 @@ function previewLine(
       return t('schedule.preview.daily', { time })
     case 'weekly':
       return t('schedule.preview.weekly', {
-        weekdays: weekdays.map(day => t(WEEKDAY_KEYS[day] as ScheduledTaskKey)).join('、'),
+        weekdays: weekdaySummary(t, weekdays),
         time,
       })
     case 'monthly':
@@ -76,6 +77,7 @@ export interface ScheduleEditorProps {
   readonly onTimeChange: (time: string) => void
   readonly onWeekdaysChange: (weekdays: number[]) => void
   readonly onDayOfMonthChange: (day: string) => void
+  readonly onTimeZoneChange: (timeZone: string) => void
   readonly onClear: () => void
 }
 
@@ -90,7 +92,7 @@ function WeekdayPicker({ t, value, onChange }: {
   const toggle = (day: number, present: boolean): void => {
     onChange(present ? value.filter(item => item !== day) : [...value, day].sort((a, b) => a - b))
   }
-  const summary = value.map(day => t(WEEKDAY_KEYS[day] as ScheduledTaskKey)).join('、') || t('schedule.pickWeekdays')
+  const summary = value.length === 0 ? t('schedule.pickWeekdays') : weekdaySummary(t, value)
   return (
     <div ref={rootRef} className={css.weekPicker}>
       <button
@@ -134,7 +136,7 @@ function WeekdayPicker({ t, value, onChange }: {
 /** Render the inline schedule editor field. */
 export function ScheduleEditor({
   t, preset, minute, time, timeZone, weekdays, dayOfMonth,
-  onPresetChange, onMinuteChange, onTimeChange, onWeekdaysChange, onDayOfMonthChange, onClear,
+  onPresetChange, onMinuteChange, onTimeChange, onWeekdaysChange, onDayOfMonthChange, onTimeZoneChange, onClear,
 }: ScheduleEditorProps) {
   const preview = previewLine(t, preset, minute, time, weekdays, dayOfMonth)
   return (
@@ -183,7 +185,15 @@ export function ScheduleEditor({
               value={time}
               onChange={(event) => { onTimeChange(event.target.value) }}
             />
-            <span className={css.timeZoneChip}>{timeZoneLabel(timeZone)}</span>
+            <input
+              className={css.timeZoneInput}
+              value={timeZone}
+              onChange={(event) => { onTimeZoneChange(event.target.value) }}
+              aria-label={t('form.timeZone')}
+              spellCheck={false}
+              title={t('form.timeZone')}
+              placeholder={timeZoneLabel(timeZone)}
+            />
           </>
         )}
         {preview !== '' && <span className={css.schedulePreview}>{preview}</span>}

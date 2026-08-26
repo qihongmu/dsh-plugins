@@ -2,8 +2,8 @@
 node_modules/
 
 # Generated build output — recreated by `npm run build`. The vendored
-# typert.remote-client.* artifacts under lib/ are NOT generated (they are
-# maintained by hand) and therefore remain tracked.
+# typert.remote-client.d.ts (host) and remotes/src/client/remote-client.js are
+# NOT generated (they are maintained by hand) and therefore remain tracked.
 **/lib/types/
 **/lib/index.js
 **/lib/invariant.js

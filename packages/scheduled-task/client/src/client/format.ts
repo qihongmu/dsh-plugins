@@ -24,6 +24,11 @@ export function humanizeDuration(t: ScheduledTaskTranslate, seconds: number): st
   return t('duration.seconds', { count: seconds })
 }
 
+/** Join localized weekday names with the locale's list separator. */
+export function weekdaySummary(t: ScheduledTaskTranslate, days: readonly number[]): string {
+  return days.map(day => t(`schedule.wd.${day}` as ScheduledTaskKey)).join(t('schedule.wd.separator'))
+}
+
 /** Localize one schedule rule into a one-line summary (list rows, previews). */
 export function ruleSummary(rule: ScheduledTaskRule, t: ScheduledTaskTranslate): string {
   switch (rule.kind) {
@@ -39,7 +44,7 @@ export function ruleSummary(rule: ScheduledTaskRule, t: ScheduledTaskTranslate):
       return t('row.schedule.daily', { time: rule.time })
     case 'weekly':
       return t('row.schedule.weekly', {
-        weekdays: rule.weekdays.map(day => t(`schedule.wd.${day}` as ScheduledTaskKey)).join('、'),
+        weekdays: weekdaySummary(t, rule.weekdays),
         time: rule.time,
       })
     case 'monthly':

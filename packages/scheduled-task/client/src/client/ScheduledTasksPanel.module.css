@@ -688,6 +688,21 @@
   color: var(--dsw-alias-label-tertiary);
 }
 
+/* Editable IANA time-zone field for the wall-clock presets; chip-styled. */
+.timeZoneInput {
+  width: 9em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: none;
+  background: var(--dsw-alias-fill-secondary, transparent);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-primary);
+}
+.timeZoneInput:focus {
+  outline: 1px solid var(--dsw-alias-border-focus, currentColor);
+}
+
 .schedulePreview {
   margin-left: auto;
   overflow: hidden;

@@ -42,16 +42,25 @@ export function ScheduledTasksPanel({ wide, remote, listProjects, listModels, t 
   const unread = tasks.filter(task => task.unread).length
 
   const refresh = async (): Promise<void> => {
-    const next = unwrap(await remote.list())
-    if (!next.ok) {
+    // Transport-level failures REJECT (envelope failures resolve); catch both
+    // so the drawer never sticks on the loading state with an unhandled rejection.
+    try {
+      const answered = await remote.list()
+      const envelope = unwrap(answered)
+      if (!envelope.ok) {
+        setRead(true)
+        setError(envelope.message)
+        setTasks([])
+        return
+      }
       setRead(true)
-      setError(next.message)
+      setError(null)
+      setTasks(envelope.value)
+    } catch (caught: unknown) {
+      setRead(true)
+      setError(t('panel.readFailed', { message: caught instanceof Error ? caught.message : String(caught) }))
       setTasks([])
-      return
     }
-    setRead(true)
-    setError(null)
-    setTasks(next.value)
   }
 
   useEffect(() => {
@@ -78,9 +87,14 @@ export function ScheduledTasksPanel({ wide, remote, listProjects, listModels, t 
     setBusy(true)
     try {
       await action()
+      setError(null)
+    } catch (caught: unknown) {
+      setError(caught instanceof Error ? caught.message : String(caught))
     } finally {
       setBusy(false)
-      void refresh()
+      try {
+        await refresh()
+      } catch { /* refresh reports its own errors */ }
     }
   }
 
@@ -111,9 +125,12 @@ export function ScheduledTasksPanel({ wide, remote, listProjects, listModels, t 
   const submit = async (
     input: ScheduledTaskCreateInput,
   ): Promise<{ ok: true } | { ok: false; message: string }> => {
-    const answered = editingId === null
-      ? await remote.create(input)
-      : await remote.update(editingId, input)
+    let answered: Awaited<ReturnType<typeof remote.create>>
+    try {
+      answered = editingId === null ? await remote.create(input) : await remote.update(editingId, input)
+    } catch (caught: unknown) {
+      return { ok: false, message: caught instanceof Error ? caught.message : String(caught) }
+    }
     const envelope = unwrap(answered)
     if (!envelope.ok) return { ok: false, message: envelope.message }
     if (!envelope.value.ok) return { ok: false, message: `${envelope.value.code}: ${envelope.value.message}` }

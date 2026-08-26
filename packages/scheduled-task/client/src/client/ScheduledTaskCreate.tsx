@@ -41,28 +41,39 @@ function localTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone
 }
 
+/** Weekday set assumed when a stored rule does not carry one (Mon–Fri). */
+const WORKDAYS: readonly number[] = [1, 2, 3, 4, 5]
+
+/** Neutral editor state shared by every preset before its own overrides. */
+const DEFAULT_SCHEDULE: Omit<ScheduleState, 'preset'> = {
+  customKind: 'at',
+  minute: '00',
+  time: '09:00',
+  timeZone: localTimeZone(),
+  weekdays: [...WORKDAYS],
+  dayOfMonth: '1',
+}
+
 /** Resolve the editor state from an edit task (or create defaults). */
 function initialSchedule(task: ScheduledTaskView | undefined): ScheduleState {
-  const tz = localTimeZone()
-  if (task === undefined) {
-    return { preset: '', customKind: 'at', minute: '00', time: '09:00', timeZone: tz, weekdays: [1, 2, 3, 4, 5], dayOfMonth: '1' }
-  }
+  const base = { ...DEFAULT_SCHEDULE, timeZone: localTimeZone() }
+  if (task === undefined) return { ...base, preset: '' }
   const rule = task.rule
   switch (rule.kind) {
     case 'hourly':
-      return { preset: 'hourly', customKind: 'at', minute: String(rule.minute).padStart(2, '0'), time: '09:00', timeZone: tz, weekdays: [1, 2, 3, 4, 5], dayOfMonth: '1' }
+      return { ...base, preset: 'hourly', minute: String(rule.minute).padStart(2, '0') }
     case 'daily':
-      return { preset: 'daily', customKind: 'at', minute: '00', time: rule.time, timeZone: rule.time_zone, weekdays: [1, 2, 3, 4, 5], dayOfMonth: '1' }
+      return { ...base, preset: 'daily', time: rule.time, timeZone: rule.time_zone }
     case 'weekly':
-      return { preset: 'weekly', customKind: 'at', minute: '00', time: rule.time, timeZone: rule.time_zone, weekdays: rule.weekdays, dayOfMonth: '1' }
+      return { ...base, preset: 'weekly', time: rule.time, timeZone: rule.time_zone, weekdays: [...rule.weekdays] }
     case 'monthly':
-      return { preset: 'monthly', customKind: 'at', minute: '00', time: rule.time, timeZone: rule.time_zone, weekdays: [1, 2, 3, 4, 5], dayOfMonth: String(rule.dayOfMonth) }
+      return { ...base, preset: 'monthly', time: rule.time, timeZone: rule.time_zone, dayOfMonth: String(rule.dayOfMonth) }
     case 'every':
-      return { preset: 'custom', customKind: 'every', minute: '00', time: '09:00', timeZone: tz, weekdays: [1, 2, 3, 4, 5], dayOfMonth: '1' }
+      return { ...base, preset: 'custom', customKind: 'every' }
     case 'after':
-      return { preset: 'custom', customKind: 'after', minute: '00', time: '09:00', timeZone: tz, weekdays: [1, 2, 3, 4, 5], dayOfMonth: '1' }
+      return { ...base, preset: 'custom', customKind: 'after' }
     case 'at':
-      return { preset: 'custom', customKind: 'at', minute: '00', time: '09:00', timeZone: tz, weekdays: [1, 2, 3, 4, 5], dayOfMonth: '1' }
+      return { ...base, preset: 'custom', customKind: 'at' }
   }
 }
 
@@ -272,6 +283,7 @@ export function ScheduledTaskCreate({
             onTimeChange={(value) => { patchSchedule({ time: value }) }}
             onWeekdaysChange={(value) => { patchSchedule({ weekdays: value }) }}
             onDayOfMonthChange={(value) => { patchSchedule({ dayOfMonth: value }) }}
+            onTimeZoneChange={(value) => { patchSchedule({ timeZone: value }) }}
             onClear={() => { patchSchedule({ preset: '' }) }}
           />
           {!selectorValid && (

@@ -297,3 +297,73 @@ describe('projection helpers', () => {
     assert.equal(scheduledTaskView(record, NOW).lastError, undefined)
   })
 })
+
+describe('selector error-code branches', () => {
+  const NOW = Date.parse('2026-03-06T04:12:33Z')
+
+  it('maps at-selector failures to the shipped codes', () => {
+    assert.throws(() => buildRule({ at: { date: '2026-03-07', time: '09:00', time_zone: 'Mars/Olympus' } }, NOW),
+      (error: unknown) => error instanceof ScheduledTaskError && error.code === 'invalid_time_zone')
+    assert.throws(() => buildRule({ at: { date: '2020-01-01', time: '09:00', time_zone: 'UTC' } }, NOW),
+      (error: unknown) => error instanceof ScheduledTaskError && error.code === 'not_future')
+  })
+
+  it('maps after_seconds and every_seconds failures to stable codes', () => {
+    for (const bad of [0, -5, 1.5]) {
+      assert.throws(() => buildRule({ after_seconds: bad }, NOW),
+        (error: unknown) => error instanceof ScheduledTaskError && error.code === 'invalid_rule')
+    }
+    assert.throws(() => buildRule({ every_seconds: 299 }, NOW),
+      (error: unknown) => error instanceof ScheduledTaskError && error.code === 'frequency_too_high')
+    assert.throws(() => buildRule({ every_seconds: 300.5 }, NOW),
+      (error: unknown) => error instanceof ScheduledTaskError && error.code === 'invalid_rule')
+  })
+
+  it('accepts hourly minute boundaries 0 and 59', () => {
+    for (const minute of [0, 59]) {
+      const rule = buildRule({ hourly: { minute } }, NOW)
+      assert.equal(rule?.kind, 'hourly')
+      assert.equal((rule as { minute: number }).minute, minute)
+      assert.ok(Number.isFinite(Date.parse(rule!.scheduledAt)))
+    }
+  })
+})
+
+describe('DST handling', () => {
+  it('marches a daily rule past a spring-forward gap instead of throwing', () => {
+    // America/New_York skips local 02:00→03:00 on 2026-03-08; a daily 02:30 rule
+    // created on Sat 3/7 (local afternoon) must land on Tue 3/9 02:30 EDT.
+    const now = Date.parse('2026-03-07T20:00:00Z') // 15:00 EST Sat
+    const rule = buildRule({ daily: { time: '02:30', time_zone: 'America/New_York' } }, now)
+    assert.equal(rule?.kind, 'daily')
+    assert.equal(rule?.scheduledAt, '2026-03-09T06:30:00.000Z')
+  })
+
+  it('resolves a fall-back duplicate local time to its first instant', () => {
+    // 2026-11-01 01:30 exists twice in New York; the shipped builder picks the first.
+    const now = Date.parse('2026-10-30T12:00:00Z')
+    const rule = buildRule({ at: { date: '2026-11-01', time: '01:30', time_zone: 'America/New_York' } }, now)
+    assert.equal(rule?.scheduledAt, '2026-11-01T05:30:00.000Z') // EDT (UTC-4) instance
+  })
+})
+
+describe('completed-state projection', () => {
+  const record = {
+    id: '9e1c2a44-0000-4000-8000-1f2f3f4f5f6f',
+    title: '一次性',
+    prompt: '做一件事',
+    rule: { kind: 'at', scheduledAt: '2026-01-01T00:00:00.000Z' },
+    status: 'completed',
+    sessionId: 'session-x',
+    createdAt: '2025-12-31T00:00:00.000Z',
+    confirmBeforeChange: false,
+    lastRunAt: '2026-01-01T00:00:01.000Z',
+  } as const
+
+  it('projects state completed with no nextRunAt or overdue flag', () => {
+    const view = scheduledTaskView(record as never, Date.parse('2026-03-06T04:12:33Z'))
+    assert.equal(view.state, 'completed')
+    assert.equal(view.nextRunAt, undefined)
+    assert.equal(view.status, 'completed')
+  })
+})

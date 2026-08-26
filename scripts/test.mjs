@@ -15,14 +15,20 @@ if (!existsSync(tsxBin)) {
   process.exit(1)
 }
 
-const testsDir = join(repoRoot, 'packages', 'scheduled-task', 'host', 'tests')
-const files = readdirSync(testsDir).filter(file => file.endsWith('.test.ts')).sort()
+const testRoots = [
+  join(repoRoot, 'packages', 'scheduled-task', 'host', 'tests'),
+  join(repoRoot, 'packages', 'scheduled-task', 'client', 'tests'),
+]
+const files = testRoots.flatMap(root => readdirSync(root)
+  .filter(file => file.endsWith('.test.ts'))
+  .map(file => join(root, file)))
+  .sort()
 if (files.length === 0) {
-  console.error(`[test] no *.test.ts found under ${testsDir}`)
+  console.error(`[test] no *.test.ts found under ${testRoots.join(', ')}`)
   process.exit(1)
 }
 
-const result = spawnSync(process.execPath, [tsxBin, '--test', ...files.map(file => join(testsDir, file))], {
+const result = spawnSync(process.execPath, [tsxBin, '--test', ...files], {
   stdio: 'inherit',
 })
 process.exit(result.status ?? 1)
