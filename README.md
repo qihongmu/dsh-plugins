@@ -2,6 +2,8 @@
 
 External plugins for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness), loaded through a `dsh` profile as ordinary plugins — the DSH library itself is never modified.
 
+[简体中文](README.zh-CN.md)
+
 ## Plugins
 
 | Plugin | What it does | Guide |
@@ -10,7 +12,7 @@ External plugins for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-
 
 ## Install
 
-Requirements: Node.js ≥ 22 and a local, built checkout of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (clone it next to this repo, or point `DSH_ROOT` at it).
+Requirements: Node.js ≥ 22, [pnpm](https://pnpm.io/), and a local, built checkout of [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (clone it next to this repo, or point `DSH_ROOT` at it).
 
 ```sh
 git clone https://github.com/qihongmu/dsh-plugins
@@ -20,25 +22,18 @@ cd dsh-plugins
 npm run bootstrap
 npm run build
 
-# 1) Link the plugin halves into the DSH profile
-mkdir -p ~/.dsh/profiles/node_modules/@deepseek-ai
-ln -s "$PWD/packages/scheduled-task/host"     ~/.dsh/profiles/node_modules/@deepseek-ai/dsh-plugins-scheduled-task
-ln -s "$PWD/packages/scheduled-task/remotes"  ~/.dsh/profiles/node_modules/@deepseek-ai/dsh-client-remotes-scheduled-task
-ln -s "$PWD/packages/scheduled-task/client"   ~/.dsh/profiles/node_modules/@deepseek-ai/dsh-client-ui-scheduled-task
-
-# 2) Register the three plugin ids in the profile's cordis patch
-cat >> ~/.dsh/profiles/web/cordis.patch.yml <<'EOF'
-- insert:
-    - id: plugins-scheduled-task
-      name: '@deepseek-ai/dsh-plugins-scheduled-task'
-    - id: plugins-ui-scheduled-task
-      name: '@deepseek-ai/dsh-client-ui-scheduled-task'
-    - id: plugins-remotes-scheduled-task
-      name: '@deepseek-ai/dsh-client-remotes-scheduled-task'
-EOF
+# Install the plugin into the web profile
+dsh plugin --profile web add \
+  ./packages/scheduled-task/host \
+  ./packages/scheduled-task/remotes \
+  ./packages/scheduled-task/client
 ```
 
+`dsh plugin` forwards the remaining arguments to pnpm inside the profile directory and registers each package as a profile bundle (its `cordis.patch.yml` is merged at boot), so no manual configuration is needed.
+
 Restart `dsh web`, then open the plugin's guide (linked above) to start using it.
+
+> **Upgrading from a manual install?** Remove the three `plugins-scheduled-task` / `plugins-remotes-scheduled-task` / `plugins-ui-scheduled-task` rows from `~/.dsh/profiles/web/cordis.patch.yml` and the old symlinks under `~/.dsh/profiles/node_modules/@deepseek-ai/` — the bundle patches now provide them.
 
 ## Contributing
 

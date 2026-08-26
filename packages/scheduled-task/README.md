@@ -2,6 +2,14 @@
 
 A global scheduler for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): write an instruction once, and the assistant runs it on your schedule — every hour / day / week / month, at a specific time, or after a delay — each run in its own conversation.
 
+[简体中文](README.zh-CN.md)
+
+## Screenshots
+
+| Task list | Creating a task |
+| --------- | --------------- |
+| ![Task list](screenshots/list.png) | ![Creating a task](screenshots/create.png) |
+
 ## Opening the panel
 
 Click the **Scheduled Tasks** trigger in the sidebar to open the drawer.

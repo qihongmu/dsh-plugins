@@ -30,12 +30,8 @@
     "./package.json": "./package.json"
   },
   "dsh": {
-    "client": {
-      "inject": [
-        "@deepseek-ai/dsh-api-gateway"
-      ],
-      "platform": "web",
-      "immediately": true
+    "bundle": {
+      "patch": "./cordis.patch.yml"
     }
   },
   "scripts": {
