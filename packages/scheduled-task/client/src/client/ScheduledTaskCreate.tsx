@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import type {
   ScheduledTaskCreateInput, ScheduledTaskView,
 } from '@deepseek-ai/dsh-plugins-scheduled-task/types'
-import { ScheduleEditor } from './ScheduleEditor.tsx'
+import { ScheduleEditor, TimezoneField } from './ScheduleEditor.tsx'
 import type { SchedulePreset } from './ScheduleEditor.tsx'
 import type {
   ScheduledTaskModelOption, ScheduledTaskProjectOption,
@@ -301,7 +301,9 @@ export function ScheduledTaskCreate({
               >
                 <option value="at">{t('form.kind.once')}</option>
                 <option value="after">{t('form.kind.delay')}</option>
-                <option value="every">{t('form.kind.interval')}</option>
+                {/* Fixed-rate ("every") is no longer offered for new tasks; the
+                    hidden option only preserves editing of tasks created earlier. */}
+                <option value="every" hidden>{t('form.kind.interval')}</option>
               </select>
             </label>
             {customKind === 'at' && (
@@ -316,11 +318,10 @@ export function ScheduledTaskCreate({
                 </label>
                 <label className={css.fieldLine}>
                   <span>{t('form.timeZone')}</span>
-                  <input
-                    className={css.textInput}
+                  <TimezoneField
+                    t={t}
                     value={timeZone}
-                    onChange={(event) => { patchSchedule({ timeZone: event.target.value }) }}
-                    placeholder={Intl.DateTimeFormat().resolvedOptions().timeZone}
+                    onChange={(value) => { patchSchedule({ timeZone: value }) }}
                   />
                 </label>
               </>
