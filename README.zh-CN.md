@@ -22,14 +22,21 @@ cd dsh-plugins
 npm run bootstrap
 npm run build
 
-# 把插件安装进 web profile
-dsh plugin --profile web add \
-  ./packages/scheduled-task/host \
-  ./packages/scheduled-task/remotes \
-  ./packages/scheduled-task/client
+# 一条命令把插件装进 web profile —— 聚合 bundle 一次性拉齐三个半包
+# （host 服务 / remotes 组装 / 浏览器 UI）
+dsh plugin --profile web add @deepseek-ai/dsh-plugins-scheduled-task-bundle
 ```
 
-`dsh plugin` 会把剩余参数转发给 profile 目录里的 pnpm，并将每个包注册为 profile bundle（其 `cordis.patch.yml` 在启动时合并），无需任何手动配置。
+聚合 bundle 把三个半包列为自己的依赖；每个半包声明 `dsh.bundle.patch`，因此 `dsh plugin` 会把 bundle 注册为 profile bundle，启动时合并其 `cordis.patch.yml`（三条插件条目）。无需任何手动配置；若同名的包已以不同 id 挂载，bundle 的条目会自动禁用自身。
+
+> **bundle 与逐个安装二选一，不要混用。** 只有需要精细控制时才用三命令形式：
+>
+> ```sh
+> dsh plugin --profile web add \
+>   ./packages/scheduled-task/host \
+>   ./packages/scheduled-task/remotes \
+>   ./packages/scheduled-task/client
+> ```
 
 重启 `dsh web` 后，按上表中的使用指南开始使用。
 

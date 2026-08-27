@@ -22,14 +22,21 @@ cd dsh-plugins
 npm run bootstrap
 npm run build
 
-# Install the plugin into the web profile
-dsh plugin --profile web add \
-  ./packages/scheduled-task/host \
-  ./packages/scheduled-task/remotes \
-  ./packages/scheduled-task/client
+# Install the plugin into the web profile — one command pulls all three halves
+# (host service, remotes assembly, browser UI) via the aggregate bundle
+dsh plugin --profile web add @deepseek-ai/dsh-plugins-scheduled-task-bundle
 ```
 
-`dsh plugin` forwards the remaining arguments to pnpm inside the profile directory and registers each package as a profile bundle (its `cordis.patch.yml` is merged at boot), so no manual configuration is needed.
+The aggregate bundle lists the three halves as its dependencies; each half declares `dsh.bundle.patch`, so `dsh plugin` registers the bundle as a profile bundle and boot merges its `cordis.patch.yml` (the three plugin entries). No manual configuration is needed, and the bundle's entries disable themselves if the same package is already mounted under a different id.
+
+> Install the **bundle or the individual halves — not both**. Only use the three-command form when you need fine-grained control:
+>
+> ```sh
+> dsh plugin --profile web add \
+>   ./packages/scheduled-task/host \
+>   ./packages/scheduled-task/remotes \
+>   ./packages/scheduled-task/client
+> ```
 
 Restart `dsh web`, then open the plugin's guide (linked above) to start using it.
 

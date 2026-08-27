@@ -4,6 +4,16 @@ A global scheduler for [DeepSeek Harness](https://github.com/deepseek-ai/deepsee
 
 [简体中文](README.zh-CN.md)
 
+## Install
+
+One command pulls all three halves (host service, remotes assembly, browser UI) via the aggregate bundle:
+
+```sh
+dsh plugin --profile web add @deepseek-ai/dsh-plugins-scheduled-task-bundle
+```
+
+The bundle must be resolvable by pnpm — from the npm registry once published, or from a local source. Prefer installing the **bundle or the individual halves, not both**; install the halves separately only for fine-grained control (`dsh plugin --profile web add ./packages/scheduled-task/host ./packages/scheduled-task/remotes ./packages/scheduled-task/client`, run from this repo after `npm run bootstrap && npm run build`). See the repository root README for prerequisites and setup.
+
 ## Screenshots
 
 | Task list | Creating a task |

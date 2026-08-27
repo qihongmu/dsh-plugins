@@ -4,6 +4,16 @@
 
 [English](README.md)
 
+## 安装
+
+一条命令通过聚合 bundle 拉齐三个半包（host 服务 / remotes 组装 / 浏览器 UI）：
+
+```sh
+dsh plugin --profile web add @deepseek-ai/dsh-plugins-scheduled-task-bundle
+```
+
+bundle 需要能被 pnpm 解析 —— 发布后从 npm registry 解析，或从本地源解析。建议 **bundle 与逐个安装二选一，不要混用**；只有需要精细控制时才逐个安装（在本仓库内先 `npm run bootstrap && npm run build`，再 `dsh plugin --profile web add ./packages/scheduled-task/host ./packages/scheduled-task/remotes ./packages/scheduled-task/client`）。前置要求与搭建步骤见仓库根 README。
+
 ## 截图
 
 | 任务列表 | 创建任务 |
