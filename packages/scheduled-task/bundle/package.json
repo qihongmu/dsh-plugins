@@ -17,5 +17,10 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qihongmu/dsh-plugins.git",
+    "directory": "packages/scheduled-task/bundle"
   }
 }

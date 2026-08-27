@@ -68,6 +68,26 @@ export function admissionBackoffMs(count: number): number {
 }
 
 /**
+ * Delay until the earliest active task's scheduled instant: an overdue target
+ * fires immediately (0), a far target is clamped to the maximum timer delay,
+ * and a schedule with no finite active target arms nothing (`undefined`).
+ * Exported pure for tests; `rearm` is its only consumer.
+ */
+export function nextDelayMs(
+  records: Iterable<readonly [ScheduledTaskIdType, ScheduledTaskRecord]>,
+  now: number,
+): number | undefined {
+  let earliest: number | undefined
+  for (const [, record] of records) {
+    if (record.status !== 'active') continue
+    const target = Date.parse(record.rule.scheduledAt)
+    if (Number.isFinite(target) && (earliest === undefined || target < earliest)) earliest = target
+  }
+  if (earliest === undefined) return undefined
+  return Math.min(Math.max(earliest - now, 0), MAX_TIMER_DELAY_MS)
+}
+
+/**
  * Whether a resume failure means the run session simply is not persisted yet
  * (first run of this task+project pair) — the only case where falling back to
  * `create` is safe. Any other failure is rethrown so it surfaces as a visible
@@ -300,15 +320,8 @@ export class ScheduledTaskService extends TypertRemoteService {
     if (this.stopping) return
     const table = this.table
     if (table === undefined) return
-    const now = Date.now()
-    let earliest: number | undefined
-    for (const [, record] of table.entries()) {
-      if (record.status !== 'active') continue
-      const target = Date.parse(record.rule.scheduledAt)
-      if (Number.isFinite(target) && (earliest === undefined || target < earliest)) earliest = target
-    }
-    if (earliest === undefined) return
-    const delay = Math.min(Math.max(earliest - now, 0), MAX_TIMER_DELAY_MS)
+    const delay = nextDelayMs(table.entries(), Date.now())
+    if (delay === undefined) return
     this.timer = setTimeout(() => {
       this.timer = undefined
       void this.fireDue(Date.now())

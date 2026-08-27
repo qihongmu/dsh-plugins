@@ -9,7 +9,6 @@
     "directory": "packages/scheduled-task/remotes"
   },
   "description": "External user plugin: browser assembly that mounts the vendored scheduledTasks Remote contribution before the scheduled-tasks UI entry activates (plugin-scoped counterpart of the in-repo dsh-api-remotes assembly).",
-  "private": true,
   "type": "module",
   "main": "lib/types/index.js",
   "types": "lib/types/index.d.ts",
@@ -51,5 +50,9 @@
     "@deepseek-ai/dsh-api-remotes": "*",
     "@deepseek-ai/dsh-plugins-scheduled-task": "*",
     "@deepseek-ai/dsh-typert-protocol": "*"
-  }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ]
 }

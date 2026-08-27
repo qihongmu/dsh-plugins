@@ -9,7 +9,6 @@
     "directory": "packages/scheduled-task/host"
   },
   "description": "External user plugin: global scheduled tasks for DeepSeek Harness (host Service + scheduler + Remote surface), no changes to the dsh library.",
-  "private": true,
   "type": "module",
   "main": "lib/types/index.js",
   "types": "lib/types/index.d.ts",
@@ -54,5 +53,9 @@
     "bundle": {
       "patch": "./cordis.patch.yml"
     }
-  }
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml"
+  ]
 }

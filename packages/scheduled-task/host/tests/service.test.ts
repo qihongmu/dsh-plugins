@@ -7,9 +7,9 @@
  */
 
 import assert from 'node:assert/strict'
-import { describe, it } from 'node:test'
+import { describe, it, mock } from 'node:test'
 import { ScheduledTaskError, buildRule } from '../src/domain.ts'
-import { admissionBackoffMs, ScheduledTaskService } from '../src/index.ts'
+import { admissionBackoffMs, nextDelayMs, ScheduledTaskService } from '../src/index.ts'
 import type { ScheduledTaskRecord } from '../src/spec.ts'
 import type { ScheduledTaskId } from '../src/types.ts'
 
@@ -304,5 +304,389 @@ describe('fireOne failure path', () => {
     assert.ok(createdWith[0].sessionId.startsWith(`task-${String(due.id)}-`))
     assert.equal(createdWith[0].meta.cwd, '/opt/demo-workspace')
     assert.equal(table.rows.get(due.id)!.sessionId, createdWith[0].sessionId, 'derived session id persisted')
+  })
+})
+
+/* ------------------------------------------------------------ scheduling */
+
+/** A task record whose rule carries an explicit scheduled instant. */
+function recordAt(overrides: Partial<ScheduledTaskRecord> = {}): ScheduledTaskRecord {
+  return taskRecord(overrides)
+}
+
+/** One-shot/admission fake handle mirroring the harness's default create. */
+function fakeHandle(options: { sessionId: string; meta?: { cwd?: string } }) {
+  return {
+    agent: {
+      session: {
+        id: options.sessionId,
+        header: { cwd: options.meta?.cwd ?? '/opt/demo-workspace' },
+        append: () => {},
+      },
+      followup: () => {},
+    },
+    dispose: async () => {},
+  }
+}
+
+function dueRecord(overrides: Partial<ScheduledTaskRecord> = {}): ScheduledTaskRecord {
+  const record = taskRecord(overrides)
+  record.rule = { ...record.rule, scheduledAt: new Date(NOW - 1).toISOString() }
+  return record
+}
+
+/** Clear a real timer the service armed, so the test process can exit. */
+function disarm(raw: Record<string, unknown>): void {
+  const timer = raw['timer']
+  if (timer !== undefined && timer !== 999) clearTimeout(timer as ReturnType<typeof setTimeout>)
+}
+
+describe('nextDelayMs', () => {
+  const at = (iso: string) => ({ ...taskRecord().rule, scheduledAt: iso })
+
+  it('chooses the earliest active target', () => {
+    const records: Array<[ScheduledTaskId, ScheduledTaskRecord]> = [
+      ['1' as ScheduledTaskId, taskRecord({ id: '1' as ScheduledTaskId, rule: at('2026-03-06T10:00:00.000Z') })],
+      ['2' as ScheduledTaskId, taskRecord({ id: '2' as ScheduledTaskId, rule: at('2026-03-06T08:00:00.000Z') })],
+    ]
+    assert.equal(nextDelayMs(records, NOW), Date.parse('2026-03-06T08:00:00.000Z') - NOW)
+  })
+
+  it('fires overdue targets immediately with delay 0', () => {
+    const records: Array<[ScheduledTaskId, ScheduledTaskRecord]> = [
+      ['1' as ScheduledTaskId, taskRecord({ rule: at('2026-03-01T00:00:00.000Z') })],
+    ]
+    assert.equal(nextDelayMs(records, NOW), 0)
+  })
+
+  it('clamps far targets to the maximum timer delay', () => {
+    const far = new Date(NOW + 2 ** 32).toISOString()
+    const records: Array<[ScheduledTaskId, ScheduledTaskRecord]> = [
+      ['1' as ScheduledTaskId, taskRecord({ rule: at(far) })],
+    ]
+    assert.equal(nextDelayMs(records, NOW), 2_147_483_647)
+  })
+
+  it('skips paused, completed, and non-finite targets', () => {
+    const records: Array<[ScheduledTaskId, ScheduledTaskRecord]> = [
+      ['p' as ScheduledTaskId, taskRecord({ id: 'p' as ScheduledTaskId, status: 'paused', rule: at('2020-01-01T00:00:00.000Z') })],
+      ['c' as ScheduledTaskId, taskRecord({ id: 'c' as ScheduledTaskId, status: 'completed', rule: at('2020-01-01T00:00:00.000Z') })],
+      ['b' as ScheduledTaskId, taskRecord({ id: 'b' as ScheduledTaskId, rule: at('not-a-date') })],
+      ['a' as ScheduledTaskId, taskRecord({ id: 'a' as ScheduledTaskId, rule: at('2026-03-06T12:00:00.000Z') })],
+    ]
+    assert.equal(nextDelayMs(records, NOW), Date.parse('2026-03-06T12:00:00.000Z') - NOW)
+  })
+
+  it('returns undefined when no active target is finite', () => {
+    const records: Array<[ScheduledTaskId, ScheduledTaskRecord]> = [
+      ['p' as ScheduledTaskId, taskRecord({ id: 'p' as ScheduledTaskId, status: 'paused' })],
+      ['b' as ScheduledTaskId, taskRecord({ id: 'b' as ScheduledTaskId, rule: at('garbage') })],
+    ]
+    assert.equal(nextDelayMs(records, NOW), undefined)
+  })
+})
+
+describe('rearm', () => {
+  it('arms a timer for a due active task and un-arms with none', () => {
+    const due = dueRecord()
+    const table = makeTable([[due.id, due]])
+    const { svc, raw } = makeService(table)
+    const rearm = (svc as unknown as { rearm(): void }).rearm.bind(svc)
+    rearm()
+    assert.ok((raw['timer'] as unknown) !== undefined, 'timer armed for a due active task')
+    table.rows.get(due.id)!.status = 'paused'
+    rearm()
+    assert.equal(raw['timer'], undefined, 'no timer when nothing is active')
+    disarm(raw)
+  })
+
+  it('clears a previous timer before re-arming', () => {
+    const due = dueRecord()
+    const { svc, raw } = makeService(makeTable([[due.id, due]]))
+    const rearm = (svc as unknown as { rearm(): void }).rearm.bind(svc)
+    raw['timer'] = 12345
+    const original = globalThis.clearTimeout
+    const spy = mock.method(globalThis, 'clearTimeout', (id: unknown) => original(id))
+    try {
+      rearm()
+      assert.equal(spy.mock.calls.length, 1, 'stale timer cleared before re-arming')
+      assert.notEqual(raw['timer'], 12345)
+    } finally {
+      spy.mock.restore()
+      disarm(raw)
+    }
+  })
+
+  it('fires a due task through the armed timer', async () => {
+    const due = dueRecord()
+    const table = makeTable([[due.id, due]])
+    const { svc } = makeService(table)
+    const rearm = (svc as unknown as { rearm(): void }).rearm.bind(svc)
+    mock.timers.enable({ apis: ['setTimeout'] })
+    try {
+      rearm()
+      mock.timers.tick(0)
+      await new Promise(resolve => setImmediate(resolve))
+      await new Promise(resolve => setImmediate(resolve))
+      assert.ok(table.rows.get(due.id)!.lastRunAt !== undefined, 'armed timer fired the due task')
+    } finally {
+      mock.timers.reset()
+    }
+  })
+})
+
+describe('fireDue', () => {
+  const fireDue = (svc: ScheduledTaskService, now: number): Promise<void> =>
+    (svc as unknown as { fireDue(now: number): Promise<void> }).fireDue(now)
+
+  it('fires only due active tasks outside their backoff window, then re-arms', async () => {
+    const due = dueRecord()
+    const pausedPast = taskRecord({
+      id: 'bbbbbbbb-0000-4000-8000-000000000002' as ScheduledTaskId,
+      status: 'paused',
+      rule: { ...taskRecord().rule, scheduledAt: new Date(NOW - 1_000).toISOString() },
+    })
+    const backingOff = dueRecord({ id: 'cccccccc-0000-4000-8000-000000000003' as ScheduledTaskId })
+    const future = taskRecord({
+      id: 'dddddddd-0000-4000-8000-000000000004' as ScheduledTaskId,
+      rule: { ...taskRecord().rule, scheduledAt: new Date(NOW + 60_000).toISOString() },
+    })
+    const table = makeTable([[due.id, due], [pausedPast.id, pausedPast], [backingOff.id, backingOff], [future.id, future]])
+    const created: string[] = []
+    const { svc, raw } = makeService(table, {
+      agents: {
+        resume: async () => { throw new Error('session not found') },
+        create: async (options: { sessionId: string; meta: { cwd: string } }) => {
+          created.push(options.sessionId)
+          return fakeHandle(options)
+        },
+      },
+    } as never)
+    ;(raw['failures'] as Map<ScheduledTaskId, { count: number; retryAfter: number }>)
+      .set(backingOff.id, { count: 2, retryAfter: NOW + 60_000 })
+
+    await fireDue(svc, NOW)
+
+    assert.equal(created.length, 1, 'only the due task is admitted')
+    assert.ok(created[0].startsWith(`task-${String(due.id)}-`))
+    assert.ok(Date.parse(table.rows.get(due.id)!.rule.scheduledAt) > NOW, 'due rule advanced')
+    assert.equal(table.rows.get(pausedPast.id)!.lastRunAt, undefined)
+    assert.equal(table.rows.get(backingOff.id)!.lastRunAt, undefined, 'backoff window respected')
+    assert.equal(table.rows.get(future.id)!.lastRunAt, undefined)
+    assert.ok((raw['timer'] as unknown) !== undefined, 're-armed after firing')
+    disarm(raw)
+  })
+
+  it('fires a task whose backoff window has elapsed', async () => {
+    const due = dueRecord()
+    const table = makeTable([[due.id, due]])
+    const { svc, raw } = makeService(table)
+    ;(raw['failures'] as Map<ScheduledTaskId, { count: number; retryAfter: number }>)
+      .set(due.id, { count: 1, retryAfter: NOW - 1 })
+
+    await fireDue(svc, NOW)
+
+    assert.ok(table.rows.get(due.id)!.lastRunAt !== undefined, 'retry allowed after the window')
+    disarm(raw)
+  })
+
+  it('runs admissions concurrently; a hanging one does not block others', async () => {
+    const a = dueRecord({ id: 'aaaaaaaa-0000-4000-8000-000000000001' as ScheduledTaskId })
+    const b = dueRecord({ id: 'bbbbbbbb-0000-4000-8000-000000000002' as ScheduledTaskId })
+    const table = makeTable([[a.id, a], [b.id, b]])
+    const started: string[] = []
+    const { svc } = makeService(table, {
+      agents: {
+        resume: async () => { throw new Error('session not found') },
+        create: async (options: { sessionId: string; meta: { cwd: string } }) => {
+          started.push(options.sessionId)
+          if (options.sessionId.includes(String(a.id))) return new Promise(() => {}) as never
+          return fakeHandle(options)
+        },
+      },
+    } as never)
+
+    const outcome = await Promise.race([
+      fireDue(svc, NOW).then(() => 'settled'),
+      new Promise(resolve => setTimeout(() => resolve('timeout'), 150)),
+    ])
+    assert.equal(outcome, 'timeout', 'fireDue stays pending while one admission hangs')
+    assert.equal(started.length, 2, 'both admissions start despite one hanging')
+  })
+})
+
+/* -------------------------------------------------------------- mutations */
+
+describe('create', () => {
+  it('persists a valid task with carry fields and arms the timer', async () => {
+    const table = makeTable()
+    const { svc, raw } = makeService(table)
+    const result = await svc.create({
+      title: '  每日总结  ',
+      prompt: '  总结工作区  ',
+      daily: { time: '09:00', time_zone: 'Asia/Shanghai' },
+      workspaceId: 'ws-1',
+      cwd: '/opt/ws-1',
+      model: { provider: 'deepseek-official', model: 'deepseek-v4-flash' },
+      confirmBeforeChange: true,
+    })
+    assert.equal(result.ok, true)
+    if (!result.ok) return
+    assert.equal(result.task.title, '每日总结', 'title trimmed')
+    assert.equal(result.task.prompt, '总结工作区', 'prompt trimmed')
+    assert.equal(result.task.workspaceId, 'ws-1')
+    assert.equal(result.task.cwd, '/opt/ws-1')
+    assert.equal(result.task.model?.provider, 'deepseek-official')
+    assert.equal(result.task.confirmBeforeChange, true)
+    assert.equal(result.task.status, 'active')
+    assert.ok(result.task.sessionId.startsWith('task-'))
+    assert.equal(table.puts.length, 1)
+    assert.ok((raw['timer'] as unknown) !== undefined, 'timer armed for the new active rule')
+    disarm(raw)
+  })
+
+  it('maps an absent selector to invalid_selector', async () => {
+    const { svc } = makeService(makeTable())
+    const result = await svc.create({ title: 't', prompt: 'p' })
+    assert.deepEqual(result, {
+      ok: false,
+      code: 'invalid_selector',
+      message: 'scheduled tasks accept exactly one of after_seconds, at, or every_seconds.',
+    })
+  })
+
+  it('maps a bad wall-clock time zone to invalid_time_zone, not internal_error', async () => {
+    const { svc } = makeService(makeTable())
+    const result = await svc.create({ title: 't', prompt: 'p', daily: { time: '09:00', time_zone: 'Mars/Olympus' } })
+    assert.equal(result.ok, false)
+    if (!result.ok) assert.equal(result.code, 'invalid_time_zone')
+  })
+
+  it('maps invalid title and prompt to their closed codes', async () => {
+    const { svc } = makeService(makeTable())
+    const badTitle = await svc.create({ title: '  ', prompt: 'p' })
+    assert.equal(badTitle.ok, false)
+    if (!badTitle.ok) assert.equal(badTitle.code, 'invalid_title')
+    const badPrompt = await svc.create({ title: 't', prompt: '' })
+    assert.equal(badPrompt.ok, false)
+    if (!badPrompt.ok) assert.equal(badPrompt.code, 'invalid_prompt')
+  })
+})
+
+describe('update', () => {
+  it('keeps the stored rule when no selector is supplied', async () => {
+    const record = taskRecord()
+    const table = makeTable([[record.id, record]])
+    const { svc, raw } = makeService(table)
+    const result = await svc.update(record.id, { title: 'renamed' })
+    assert.equal(result.ok, true)
+    assert.equal(table.rows.get(record.id)!.title, 'renamed')
+    assert.equal(table.rows.get(record.id)!.rule.kind, record.rule.kind)
+    disarm(raw)
+  })
+
+  it('replaces the rule when a selector is supplied', async () => {
+    const record = taskRecord()
+    const table = makeTable([[record.id, record]])
+    const { svc, raw } = makeService(table)
+    const result = await svc.update(record.id, {
+      weekly: { weekdays: [1, 3], time: '08:30', time_zone: 'Asia/Shanghai' },
+    })
+    assert.equal(result.ok, true)
+    assert.equal(table.rows.get(record.id)!.rule.kind, 'weekly')
+    disarm(raw)
+  })
+
+  it('returns task_not_found for unknown ids and maps bad titles', async () => {
+    const { svc } = makeService(makeTable())
+    const missing = await svc.update('ghost' as ScheduledTaskId, { title: 'x' })
+    assert.deepEqual(missing, { ok: false, code: 'task_not_found', message: "no scheduled task 'ghost'." })
+
+    const record = taskRecord()
+    const table = makeTable([[record.id, record]])
+    const { svc: svc2 } = makeService(table)
+    const bad = await svc2.update(record.id, { title: ' ' })
+    assert.equal(bad.ok, false)
+    if (!bad.ok) assert.equal(bad.code, 'invalid_title')
+  })
+})
+
+describe('list', () => {
+  it('sorts by scheduledAt then by id', () => {
+    const mk = (id: string, scheduledAt: string): ScheduledTaskRecord =>
+      taskRecord({ id: id as ScheduledTaskId, rule: { ...taskRecord().rule, scheduledAt } })
+    const later = mk('11111111-0000-4000-8000-000000000001', '2026-03-07T00:00:00.000Z')
+    const early = mk('22222222-0000-4000-8000-000000000002', '2026-03-06T00:00:00.000Z')
+    const tieA = mk('33333333-0000-4000-8000-000000000003', '2026-03-05T00:00:00.000Z')
+    const tieB = mk('44444444-0000-4000-8000-000000000004', '2026-03-05T00:00:00.000Z')
+    const table = makeTable([[later.id, later], [early.id, early], [tieA.id, tieA], [tieB.id, tieB]])
+    const { svc } = makeService(table)
+    assert.deepEqual(svc.list().map(task => task.id), [tieA.id, tieB.id, early.id, later.id])
+  })
+})
+
+describe('fireOne terminal branch', () => {
+  it('completes a one-shot task after it fires', async () => {
+    const once = taskRecord({ rule: buildRule({ after_seconds: 60 }, NOW)! })
+    once.rule = { ...once.rule, scheduledAt: new Date(NOW - 1).toISOString() }
+    const table = makeTable([[once.id, once]])
+    const { svc, raw } = makeService(table)
+    await (svc as unknown as { fireOne(id: ScheduledTaskId, r: ScheduledTaskRecord, now: number): Promise<void> })
+      .fireOne(once.id, once, NOW)
+    const stored = table.rows.get(once.id)!
+    assert.equal(stored.status, 'completed')
+    assert.equal(stored.lastRunAt, new Date(NOW).toISOString())
+    assert.equal(stored.rule.scheduledAt, once.rule.scheduledAt, 'terminal rule kept')
+    assert.equal((raw['failures'] as Map<unknown, unknown>).size, 0)
+  })
+})
+
+describe('run-session identity', () => {
+  it('is stable per task+cwd pair and distinct across cwds', async () => {
+    const record = taskRecord({ cwd: '/opt/a' })
+    const table = makeTable([[record.id, record]])
+    const created: Array<{ sessionId: string; meta: { cwd: string } }> = []
+    const { svc } = makeService(table, {
+      agents: {
+        resume: async () => { throw new Error('session not found') },
+        create: async (options: { sessionId: string; meta: { cwd: string } }) => {
+          created.push(options)
+          return fakeHandle(options)
+        },
+      },
+    } as never)
+    const fireOne = (svc as unknown as { fireOne(id: ScheduledTaskId, r: ScheduledTaskRecord, now: number): Promise<void> })
+      .fireOne.bind(svc)
+
+    await fireOne(record.id, record, NOW)
+    const first = created[0]!
+    assert.ok(first.sessionId.startsWith(`task-${String(record.id)}-`))
+
+    // Same cwd again: the retained handle matches, no new session is created.
+    await fireOne(record.id, table.rows.get(record.id)!, NOW + 1_000)
+    assert.equal(created.length, 1, 'same task+cwd reuses the retained handle')
+
+    // Different cwd: a fresh session id is derived.
+    await fireOne(record.id, { ...table.rows.get(record.id)!, cwd: '/opt/b' }, NOW + 2_000)
+    assert.equal(created.length, 2)
+    assert.ok(created[1]!.sessionId.startsWith(`task-${String(record.id)}-`))
+    assert.notEqual(created[1]!.sessionId, first.sessionId)
+  })
+})
+
+describe('teardown', () => {
+  it('stops the timer and disposes retained run agents', async () => {
+    const { svc, raw } = makeService(makeTable())
+    let disposed = 0
+    ;(raw['handles'] as Map<ScheduledTaskId, { dispose(): Promise<void> }>)
+      .set('h1' as ScheduledTaskId, { dispose: async () => { disposed += 1 } })
+    raw['timer'] = 999
+
+    await (svc as unknown as { teardown(): Promise<void> }).teardown()
+
+    assert.equal(disposed, 1)
+    assert.equal((raw['handles'] as Map<unknown, unknown>).size, 0)
+    assert.equal(raw['timer'], undefined)
+    assert.equal(raw['stopping'], true)
   })
 })
