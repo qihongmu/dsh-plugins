@@ -301,9 +301,12 @@ export function ScheduledTaskCreate({
               >
                 <option value="at">{t('form.kind.once')}</option>
                 <option value="after">{t('form.kind.delay')}</option>
-                {/* Fixed-rate ("every") is no longer offered for new tasks; the
-                    hidden option only preserves editing of tasks created earlier. */}
-                <option value="every" hidden>{t('form.kind.interval')}</option>
+                {/* Fixed-rate ("every") is no longer offered for new tasks. A task
+                    created earlier still round-trips: while it is the current kind
+                    the option is shown disabled with its label (a hidden selected
+                    option would render as a blank choice); switching kinds removes
+                    it, so it can never be re-selected. */}
+                {customKind === 'every' && <option value="every" disabled>{t('form.kind.interval')}</option>}
               </select>
             </label>
             {customKind === 'at' && (

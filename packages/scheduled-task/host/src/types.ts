@@ -158,7 +158,6 @@ export interface ScheduledTaskUpdateInput extends ScheduledTaskCarryFields, Sche
   title?: string
 }
 
-/** Timing state derived from the durable rule and wall clock. */
 /** Coarse display phase derived from status + wall clock. */
 export type ScheduledTaskState = 'scheduled' | 'overdue' | 'completed'
 

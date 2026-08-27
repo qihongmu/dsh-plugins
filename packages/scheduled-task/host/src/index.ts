@@ -75,6 +75,10 @@ export function admissionBackoffMs(count: number): number {
  *
  * The upstream agents service has no stable machine-readable "missing session"
  * contract, so this matches the human-readable phrasings it emits today.
+ * Caveat: an upstream copy change silently breaks resume-vs-create
+ * discrimination (a truly missing session would then be rethrown as a visible
+ * task error, never silently re-created). If upstream ever exposes a stable
+ * error type/code, prefer that over this regex.
  */
 function isMissingSessionError(error: unknown): boolean {
   return /\bnot found\b|\bdoes not exist\b|\bno such session\b|\bunknown session\b/

@@ -147,7 +147,7 @@ export const zh = {
   'form.prompt.required': '请填写任务指令',
   'form.schedule.label': '调度',
   'form.schedule.required': '请先选择调度频率',
-  'form.schedule.invalid': '调度信息不完整,请补全后重试',
+  'form.schedule.invalid': '调度信息不完整，请补全后重试',
   'form.schedule.add': '+ 添加计划',
   'schedule.hourly': '每小时',
   'schedule.daily': '每天',

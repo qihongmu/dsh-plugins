@@ -327,6 +327,26 @@ describe('selector error-code branches', () => {
       assert.ok(Number.isFinite(Date.parse(rule!.scheduledAt)))
     }
   })
+
+  it('maps invalid wall-clock time zones to invalid_time_zone, not internal_error', () => {
+    // The wall-clock presets surface builder failures through the closed task
+    // error union, so a bogus zone reaches the client as its stable code.
+    for (const preset of [
+      { daily: { time: '09:00', time_zone: 'Mars/Olympus' } },
+      { weekly: { weekdays: [1], time: '09:00', time_zone: 'Mars/Olympus' } },
+      { monthly: { dayOfMonth: 15, time: '09:00', time_zone: 'Mars/Olympus' } },
+    ]) {
+      assert.throws(() => buildRule(preset, NOW),
+        (error: unknown) => error instanceof ScheduledTaskError && error.code === 'invalid_time_zone')
+    }
+  })
+
+  it('trims whitespace around wall-clock time zones', () => {
+    const rule = buildRule({ daily: { time: '09:00', time_zone: ' Asia/Shanghai ' } }, NOW)
+    assert.equal(rule?.kind, 'daily')
+    assert.equal((rule as { time_zone: string }).time_zone, 'Asia/Shanghai')
+    assert.ok(Number.isFinite(Date.parse(rule!.scheduledAt)))
+  })
 })
 
 describe('DST handling', () => {

@@ -90,7 +90,7 @@ function validateTimeZone(value: unknown, preset: 'daily' | 'weekly' | 'monthly'
   if (typeof value !== 'string' || value.trim() === '') {
     throw new ScheduledTaskError('invalid_rule', `${preset} requires a time_zone string.`)
   }
-  return value
+  return value.trim()
 }
 
 /** Translate one contained `dsh-schedule` builder failure to the closed task error union. */
@@ -129,19 +129,27 @@ function atInstant(date: string, time: string, timeZone: string, now: number): n
  * Convert one candidate instant, treating `not_future` (a candidate already
  * past or equal to `now`, which the shipped builder rejects) as a miss rather
  * than a fatality — the caller then marches to the next candidate day/hour.
+ * Every other builder failure is first translated to the closed task error
+ * union, so a wall-clock preset reports e.g. `invalid_time_zone` as a
+ * ScheduledTaskError (mapped to its code in the mutation envelope) instead of
+ * degrading to a generic `internal_error`.
  */
 function tryInstant(date: string, time: string, timeZone: string, now: number): number | undefined {
   try {
     return atInstant(date, time, timeZone, now)
   } catch (caught: unknown) {
-    if (caught instanceof ScheduleInputError && caught.code === 'not_future') return undefined
-    // DST spring-forward: a local wall-clock time can be SKIPPED entirely
-    // (e.g. America/New_York 02:30 on the transition day). The shipped builder
-    // reports that as invalid_rule "The local at time does not exist…" — treat
-    // it as a miss so the caller marches to the next candidate day instead of
-    // failing the whole rule.
-    if (caught instanceof ScheduleInputError && caught.code === 'invalid_rule'
-      && caught.message.includes('does not exist')) return undefined
+    if (caught instanceof ScheduleInputError) {
+      const error = new ScheduledTaskError(caught.code as ScheduledTaskErrorCode, caught.message, { cause: caught })
+      if (error.code === 'not_future') return undefined
+      // DST spring-forward: a local wall-clock time can be SKIPPED entirely
+      // (e.g. America/New_York 02:30 on the transition day). The shipped builder
+      // reports that as invalid_rule "The local at time does not exist…" — treat
+      // it as a miss so the caller marches to the next candidate day instead of
+      // failing the whole rule.
+      if (error.code === 'invalid_rule' && error.message.includes('does not exist')) return undefined
+      throw error
+    }
+    /* v8 ignore next -- the record builders throw only ScheduleInputError after shape checks above. */
     throw caught
   }
 }
