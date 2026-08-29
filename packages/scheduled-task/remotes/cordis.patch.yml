@@ -1,5 +1,5 @@
-# @deepseek-ai/dsh-client-remotes-scheduled-task: plugins-remotes-scheduled-task — merged into the profile patch list by `dsh plugin` once
+# @qihongmu/dsh-client-remotes-scheduled-task: plugins-remotes-scheduled-task — merged into the profile patch list by `dsh plugin` once
 # this package is added to dsh.profile.bundles.
 - insert:
     - id: plugins-remotes-scheduled-task
-      name: '@deepseek-ai/dsh-client-remotes-scheduled-task'
+      name: '@qihongmu/dsh-client-remotes-scheduled-task'

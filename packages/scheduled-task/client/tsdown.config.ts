@@ -14,7 +14,7 @@
  */
 
 import { readFileSync } from 'node:fs'
-import { basename, dirname, join, resolve } from 'node:path'
+import { basename, dirname, join, relative, resolve } from 'node:path'
 import { createRequire } from 'node:module'
 import { defineConfig, type Plugin } from 'tsdown'
 
@@ -31,8 +31,13 @@ const { transform } = dshRequire('lightningcss') as {
 const CSS_PREFIX = '\0dsh-plugin-css:'
 const CSS_SUFFIX = '.dshcss.js'
 
+// Virtual ids must stay package-relative: they surface verbatim in rolldown's
+// `//#region` comments inside the shipped lib/client.js, and an absolute id
+// would leak the build machine's paths into the published tarball.
+const PKG_ROOT = process.cwd()
+
 /** Plugin id stamped into the __ModuleLoader__.load registration handoff. */
-const PLUGIN_ID = '@deepseek-ai/dsh-client-ui-scheduled-task'
+const PLUGIN_ID = '@qihongmu/dsh-client-ui-scheduled-task'
 
 /**
  * Compile one `.module.css` into a class-map module that self-injects its CSS.
@@ -44,12 +49,14 @@ function cssModules(): Plugin {
     name: 'external-dsh-css-modules',
     resolveId(source, importer) {
       if (!source.endsWith('.module.css') || importer === undefined) return null
-      if (source.startsWith('.')) return `${CSS_PREFIX}${resolve(dirname(importer), source)}${CSS_SUFFIX}`
+      if (source.startsWith('.')) {
+        return `${CSS_PREFIX}${relative(PKG_ROOT, resolve(dirname(importer), source))}${CSS_SUFFIX}`
+      }
       return null
     },
     load(id) {
       if (!id.startsWith(CSS_PREFIX) || !id.endsWith(CSS_SUFFIX)) return null
-      const file = id.slice(CSS_PREFIX.length, -CSS_SUFFIX.length)
+      const file = resolve(PKG_ROOT, id.slice(CSS_PREFIX.length, -CSS_SUFFIX.length))
       const sourceName = basename(file)
       const result = transform({
         filename: file,
@@ -75,13 +82,15 @@ function cssModules(): Plugin {
 }
 
 export default defineConfig({
-  name: '@deepseek-ai/dsh-client-ui-scheduled-task/client',
+  name: '@qihongmu/dsh-client-ui-scheduled-task/client',
   entry: { client: 'src/client/index.ts' },
   outDir: 'lib',
   format: 'cjs',
   platform: 'browser',
   dts: false,
-  sourcemap: true,
+  // No sourcemaps in the shipped bundle: the tarball excludes *.map, so a
+  // sourceMappingURL comment here would only be a dangling reference.
+  sourcemap: false,
   clean: false,
   // Pin `lib/client.js`: the module table resolves exports["./client"] there.
   outputOptions: {

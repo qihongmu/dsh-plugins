@@ -1,13 +1,13 @@
 /**
  * Package-owned invariant companion for the external scheduled-task remotes
  * assembly plugin.
- * @module @deepseek-ai/dsh-client-remotes-scheduled-task/invariant
+ * @module @qihongmu/dsh-client-remotes-scheduled-task/invariant
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-remotes-scheduled-task'
+const PACKAGE_NAME = '@qihongmu/dsh-client-remotes-scheduled-task'
 
 /** Cordis invariant-companion plugin name. */
 export const name = 'scheduled-task-remotes-invariant'

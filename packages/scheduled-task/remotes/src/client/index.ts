@@ -2,7 +2,7 @@
  * External scheduled-tasks remotes assembly (browser half): mounts the
  * vendored `scheduledTasks` Remote contribution so the UI entry can consume
  * `ctx.remote.scheduledTasks` through a declared inject edge.
- * @module @deepseek-ai/dsh-client-remotes-scheduled-task/client
+ * @module @qihongmu/dsh-client-remotes-scheduled-task/client
  */
 
 import type { Context } from '@deepseek-ai/cordis'

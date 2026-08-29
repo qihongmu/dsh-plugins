@@ -62,9 +62,9 @@ const TOP_LEVEL_PACKAGES = [
 
 /** Self-references between this workspace's own halves (name → local dir). */
 const SELF_LINKS = new Map([
-  ['@deepseek-ai/dsh-plugins-scheduled-task', 'packages/scheduled-task/host'],
-  ['@deepseek-ai/dsh-client-remotes-scheduled-task', 'packages/scheduled-task/remotes'],
-  ['@deepseek-ai/dsh-client-ui-scheduled-task', 'packages/scheduled-task/client'],
+  ['@qihongmu/dsh-plugins-scheduled-task', 'packages/scheduled-task/host'],
+  ['@qihongmu/dsh-client-remotes-scheduled-task', 'packages/scheduled-task/remotes'],
+  ['@qihongmu/dsh-client-ui-scheduled-task', 'packages/scheduled-task/client'],
 ])
 
 /**

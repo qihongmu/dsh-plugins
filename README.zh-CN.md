@@ -12,36 +12,18 @@
 
 ## 安装
 
-前置要求：Node.js ≥ 22、[pnpm](https://pnpm.io/)，以及一份本地构建好的 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 源码检出（放在本仓库旁边，或用 `DSH_ROOT` 指向它）。
+前置要求：Node.js ≥ 22、[pnpm](https://pnpm.io/)。**兼容性**：已在 DeepSeek Harness `v0.1.1-rc.2` 上验证；更新的 `dsh` 版本尚不保证可用。
 
 ```sh
-git clone https://github.com/qihongmu/dsh-plugins
-cd dsh-plugins
-
-# 针对你的 DSH 检出构建插件
-npm run bootstrap
-npm run build
-
-# 一条命令把插件装进 web profile —— 聚合 bundle 一次性拉齐三个半包
-# （host 服务 / remotes 组装 / 浏览器 UI）
-dsh plugin --profile web add @deepseek-ai/dsh-plugins-scheduled-task-bundle
+dsh plugin --profile web add @qihongmu/dsh-plugins-scheduled-task-bundle
 ```
 
-聚合 bundle 把三个半包列为自己的依赖；每个半包声明 `dsh.bundle.patch`，因此 `dsh plugin` 会把 bundle 注册为 profile bundle，启动时合并其 `cordis.patch.yml`（三条插件条目）。无需任何手动配置；若同名的包已以不同 id 挂载，bundle 的条目会自动禁用自身。
+一条命令拉齐三个半包（host 服务 / remotes 组装 / 浏览器 UI）并注册到 web profile。重启 `dsh web` 后，按上表中的使用指南开始使用。
 
-> **bundle 与逐个安装二选一，不要混用。** 只有需要精细控制时才用三命令形式：
->
-> ```sh
-> dsh plugin --profile web add \
->   ./packages/scheduled-task/host \
->   ./packages/scheduled-task/remotes \
->   ./packages/scheduled-task/client
-> ```
+> **bundle 与逐个安装二选一，不要混用。** 三命令形式（`dsh plugin --profile web add ./packages/scheduled-task/host ./packages/scheduled-task/remotes ./packages/scheduled-task/client`）只适用于源码检出，且仅在需要精细控制时使用。
 
-重启 `dsh web` 后，按上表中的使用指南开始使用。
+> **从手动安装升级？** 请删除 `~/.dsh/profiles/web/cordis.patch.yml` 中的 `plugins-scheduled-task` / `plugins-remotes-scheduled-task` / `plugins-ui-scheduled-task` 三行，以及 `~/.dsh/profiles/node_modules/@qihongmu/` 下的旧软链 —— 现在由 bundle 补丁提供。
 
-> **从手动安装升级？** 请删除 `~/.dsh/profiles/web/cordis.patch.yml` 中的 `plugins-scheduled-task` / `plugins-remotes-scheduled-task` / `plugins-ui-scheduled-task` 三行，以及 `~/.dsh/profiles/node_modules/@deepseek-ai/` 下的旧软链 —— 现在由 bundle 补丁提供。
+## 开发
 
-## 贡献
-
-参见 [CONTRIBUTING.md](CONTRIBUTING.md)。
+基于本地 DeepSeek Harness 源码检出构建：参见 [CONTRIBUTING.md](CONTRIBUTING.md)。

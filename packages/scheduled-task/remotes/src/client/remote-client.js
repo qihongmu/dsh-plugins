@@ -136,10 +136,10 @@ const _deepseek_ai_dsh_scheduled_task_scheduledTasks_update_parameter_1$schema =
 const _deepseek_ai_dsh_scheduled_task_scheduledTasks_update_result$schema = $mutationResult
 
 export const TYPERT_REMOTE = {
-  package: '@deepseek-ai/dsh-plugins-scheduled-task',
+  package: '@qihongmu/dsh-plugins-scheduled-task',
   descriptors: [
     {
-      id: '@deepseek-ai/dsh-plugins-scheduled-task#scheduledTasks/create',
+      id: '@qihongmu/dsh-plugins-scheduled-task#scheduledTasks/create',
       service: 'scheduledTasks',
       namespace: 'scheduledTasks',
       method: 'create',
@@ -151,20 +151,20 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskCreateInput',
+            typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskCreateInput',
             schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_create_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskMutationResult',
+        typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskMutationResult',
         schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_create_result$schema,
       },
       sourceLocation: {"file":"packages/scheduled-task/host/src/index.ts","line":166,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-plugins-scheduled-task#scheduledTasks/delete',
+      id: '@qihongmu/dsh-plugins-scheduled-task#scheduledTasks/delete',
       service: 'scheduledTasks',
       namespace: 'scheduledTasks',
       method: 'delete',
@@ -176,20 +176,20 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskId',
+            typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskId',
             schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_delete_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskDeleteResult',
+        typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskDeleteResult',
         schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_delete_result$schema,
       },
       sourceLocation: {"file":"packages/scheduled-task/host/src/index.ts","line":244,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-plugins-scheduled-task#scheduledTasks/list',
+      id: '@qihongmu/dsh-plugins-scheduled-task#scheduledTasks/list',
       service: 'scheduledTasks',
       namespace: 'scheduledTasks',
       method: 'list',
@@ -198,13 +198,13 @@ export const TYPERT_REMOTE = {
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task#scheduledTasks/list:result',
+        typeSymbol: '@qihongmu/dsh-plugins-scheduled-task#scheduledTasks/list:result',
         schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_list_result$schema,
       },
       sourceLocation: {"file":"packages/scheduled-task/host/src/index.ts","line":151,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-plugins-scheduled-task#scheduledTasks/markRead',
+      id: '@qihongmu/dsh-plugins-scheduled-task#scheduledTasks/markRead',
       service: 'scheduledTasks',
       namespace: 'scheduledTasks',
       method: 'markRead',
@@ -216,20 +216,20 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskId',
+            typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskId',
             schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_markRead_parameter_0$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task#scheduledTasks/markRead:result',
+        typeSymbol: '@qihongmu/dsh-plugins-scheduled-task#scheduledTasks/markRead:result',
         schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_markRead_result$schema,
       },
       sourceLocation: {"file":"packages/scheduled-task/host/src/index.ts","line":268,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-plugins-scheduled-task#scheduledTasks/setStatus',
+      id: '@qihongmu/dsh-plugins-scheduled-task#scheduledTasks/setStatus',
       service: 'scheduledTasks',
       namespace: 'scheduledTasks',
       method: 'setStatus',
@@ -241,7 +241,7 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskId',
+            typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskId',
             schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_setStatus_parameter_0$schema,
           },
         },
@@ -251,20 +251,20 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskSettableStatus',
+            typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskSettableStatus',
             schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_setStatus_parameter_1$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskMutationResult',
+        typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskMutationResult',
         schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_setStatus_result$schema,
       },
       sourceLocation: {"file":"packages/scheduled-task/host/src/index.ts","line":222,"column":3},
     },
     {
-      id: '@deepseek-ai/dsh-plugins-scheduled-task#scheduledTasks/update',
+      id: '@qihongmu/dsh-plugins-scheduled-task#scheduledTasks/update',
       service: 'scheduledTasks',
       namespace: 'scheduledTasks',
       method: 'update',
@@ -276,7 +276,7 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskId',
+            typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskId',
             schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_update_parameter_0$schema,
           },
         },
@@ -286,14 +286,14 @@ export const TYPERT_REMOTE = {
           source: 'json',
           codec: {
             mode: 'strict',
-            typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskUpdateInput',
+            typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskUpdateInput',
             schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_update_parameter_1$schema,
           },
         },
       ],
       result: {
         mode: 'strict',
-        typeSymbol: '@deepseek-ai/dsh-plugins-scheduled-task/types#ScheduledTaskMutationResult',
+        typeSymbol: '@qihongmu/dsh-plugins-scheduled-task/types#ScheduledTaskMutationResult',
         schema: _deepseek_ai_dsh_scheduled_task_scheduledTasks_update_result$schema,
       },
       sourceLocation: {"file":"packages/scheduled-task/host/src/index.ts","line":200,"column":3},

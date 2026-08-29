@@ -5,10 +5,10 @@
  * the 新建定时任务 create/edit form (schedule presets, instruction prompt,
  * project workspace, confirm-before-change, model). The `scheduledTasks`
  * Remote namespace is provided by the sibling remotes assembly entry
- * (`@deepseek-ai/dsh-client-remotes-scheduled-task`), which activates first —
+ * (`@qihongmu/dsh-client-remotes-scheduled-task`), which activates first —
  * this entry declares it plus `connection`/`sessions` (the project and model
  * option catalogs) in its inject list so cordis grants the guarded reads.
- * @module @deepseek-ai/dsh-client-ui-scheduled-task/client
+ * @module @qihongmu/dsh-client-ui-scheduled-task/client
  */
 
 import type { Context } from '@deepseek-ai/cordis'

@@ -24,11 +24,11 @@ does not repeat the investigation.
    `createEveryScheduleRecord`) and `resolveEveryOccurrence`, so it needs no change to DSH.
 4. **Typert discovery**. `WorkspaceTypertGenerator` (DSH's generator) discovers the external
    package once the root `tsconfig.host.json` references it: `discover(['host'])` returns
-   `@deepseek-ai/dsh-plugins-scheduled-task`.
+   `@qihongmu/dsh-plugins-scheduled-task`.
 5. **Client bundle serving**. The modules node half (`clientExportOf` + `clientPath`) resolves
    `exports["./client"].default` → `lib/client.js` for the external client package from the
    runtime profile (`dsh.client.platform === 'web'`). Verified against
-   `$DSH_HOME/profiles/node_modules/@deepseek-ai/dsh-client-ui-scheduled-task`.
+   `$DSH_HOME/profiles/node_modules/@qihongmu/dsh-client-ui-scheduled-task`.
 6. **Remote descriptors register**. `scripts/verify-remote.mjs` loads the vendored `./remote`
    contribution in Node and confirms `namespace: scheduledTasks` with 6 methods
    (list/create/update/setStatus/delete/markRead).
@@ -59,7 +59,7 @@ meta source (`cordis`, `dsh-typert-protocol`, `dsh-session`, `dsh-agent`, …) i
 build already emits the runtime `TYPERT_REMOTE` object + `.d.ts` for the in-repo
 `dsh-scheduled-task` package. Those artifacts are copied into the external host as
 `packages/scheduled-task/host/lib/typert.remote-client.{js,d.ts}` with the package-scope import
-rewritten `@deepseek-ai/dsh-scheduled-task` → `@deepseek-ai/dsh-plugins-scheduled-task`, and into
+rewritten `@deepseek-ai/dsh-scheduled-task` → `@qihongmu/dsh-plugins-scheduled-task`, and into
 the external remotes assembly as `packages/scheduled-task/remotes/src/client/remote-client.{js,d.ts}`.
 No external typert analysis/generation is required at all — the generator is bypassed
 (`scripts/gen-typert.mjs` probes discovery only; `scripts/verify-remote.mjs` proves the vendored

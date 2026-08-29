@@ -4,7 +4,7 @@
  * its own entry so the UI entry can declare `remote.scheduledTasks` in its
  * inject list — cordis priviledges a consuming fiber to read a Remote
  * namespace only when a different, earlier-activated entry provided it.
- * @module @deepseek-ai/dsh-client-remotes-scheduled-task
+ * @module @qihongmu/dsh-client-remotes-scheduled-task
  */
 
 /** Host loader entry for the browser-only remotes assembly plugin. */

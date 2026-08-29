@@ -6,7 +6,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import { humanizeDuration, localizedDate, ruleSummary } from '../src/client/format.ts'
-import type { ScheduledTaskRule } from '@deepseek-ai/dsh-plugins-scheduled-task/types'
+import type { ScheduledTaskRule } from '@qihongmu/dsh-plugins-scheduled-task/types'
 
 /** Echo translator: renders `key` plus substituted params for visibility. */
 const t = ((key: string, params?: Record<string, unknown>): string => {

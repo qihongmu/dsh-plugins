@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react'
 import type {
   ScheduledTaskCreateInput, ScheduledTaskView,
-} from '@deepseek-ai/dsh-plugins-scheduled-task/types'
+} from '@qihongmu/dsh-plugins-scheduled-task/types'
 import { ScheduleEditor, TimezoneField } from './ScheduleEditor.tsx'
 import type { SchedulePreset } from './ScheduleEditor.tsx'
 import type {

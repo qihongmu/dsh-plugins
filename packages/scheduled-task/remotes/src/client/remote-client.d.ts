@@ -3,7 +3,7 @@
  * (`remote-client.js`). The runtime file is generated output carrying the
  * `scheduledTasks` descriptors; this face pins its default export to the
  * public contribution type.
- * @module @deepseek-ai/dsh-client-ui-scheduled-task/src/client/remote-client
+ * @module @qihongmu/dsh-client-ui-scheduled-task/src/client/remote-client
  */
 import type { TypertRemoteContribution } from '@deepseek-ai/dsh-typert-protocol'
 

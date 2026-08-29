@@ -1,7 +1,7 @@
 /**
  * External global scheduled-task capability: durable registry, scheduler,
  * delivery, and Remote surface. Reuses only shipped dsh API — no repo edits.
- * @module @deepseek-ai/dsh-plugins-scheduled-task
+ * @module @qihongmu/dsh-plugins-scheduled-task
  */
 
 import { createHash, randomUUID } from 'node:crypto'

@@ -1,15 +1,15 @@
-# Aggregate mount: one `dsh plugin --profile <name> add @deepseek-ai/dsh-plugins-scheduled-task-bundle`
+# Aggregate mount: one `dsh plugin --profile <name> add @qihongmu/dsh-plugins-scheduled-task-bundle`
 # installs the three halves as dependencies and inserts their three entries here.
 # Each row disables itself when the same package is already mounted under a
 # different entry id (e.g. a sub-package installed individually before the
 # bundle), preventing a duplicate mount.
 - insert:
     - id: plugins-scheduled-task
-      name: '@deepseek-ai/dsh-plugins-scheduled-task'
-      disabled: !!js "[...ctx.loader.entries()].some((e) => e.options.name === '@deepseek-ai/dsh-plugins-scheduled-task' && e.options.id !== 'plugins-scheduled-task' && !e.disabled)"
+      name: '@qihongmu/dsh-plugins-scheduled-task'
+      disabled: !!js "[...ctx.loader.entries()].some((e) => e.options.name === '@qihongmu/dsh-plugins-scheduled-task' && e.options.id !== 'plugins-scheduled-task' && !e.disabled)"
     - id: plugins-remotes-scheduled-task
-      name: '@deepseek-ai/dsh-client-remotes-scheduled-task'
-      disabled: !!js "[...ctx.loader.entries()].some((e) => e.options.name === '@deepseek-ai/dsh-client-remotes-scheduled-task' && e.options.id !== 'plugins-remotes-scheduled-task' && !e.disabled)"
+      name: '@qihongmu/dsh-client-remotes-scheduled-task'
+      disabled: !!js "[...ctx.loader.entries()].some((e) => e.options.name === '@qihongmu/dsh-client-remotes-scheduled-task' && e.options.id !== 'plugins-remotes-scheduled-task' && !e.disabled)"
     - id: plugins-ui-scheduled-task
-      name: '@deepseek-ai/dsh-client-ui-scheduled-task'
-      disabled: !!js "[...ctx.loader.entries()].some((e) => e.options.name === '@deepseek-ai/dsh-client-ui-scheduled-task' && e.options.id !== 'plugins-ui-scheduled-task' && !e.disabled)"
+      name: '@qihongmu/dsh-client-ui-scheduled-task'
+      disabled: !!js "[...ctx.loader.entries()].some((e) => e.options.name === '@qihongmu/dsh-client-ui-scheduled-task' && e.options.id !== 'plugins-ui-scheduled-task' && !e.disabled)"

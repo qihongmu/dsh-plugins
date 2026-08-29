@@ -1,12 +1,12 @@
 /**
  * Package-owned invariant companion for the external scheduled-task UI plugin.
- * @module @deepseek-ai/dsh-client-ui-scheduled-task/invariant
+ * @module @qihongmu/dsh-client-ui-scheduled-task/invariant
  */
 
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-ui-scheduled-task'
+const PACKAGE_NAME = '@qihongmu/dsh-client-ui-scheduled-task'
 
 /** Cordis invariant-companion plugin name. */
 export const name = 'scheduled-task-ui-invariant'

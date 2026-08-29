@@ -1,6 +1,6 @@
 /**
  * Wire-facing global scheduled-task value types (client-safe; no DSH repo edits).
- * @module @deepseek-ai/dsh-plugins-scheduled-task
+ * @module @qihongmu/dsh-plugins-scheduled-task
  */
 
 import type { Branded } from '@deepseek-ai/dsh-brand'

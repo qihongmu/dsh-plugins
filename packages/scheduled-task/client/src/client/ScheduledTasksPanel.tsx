@@ -11,7 +11,7 @@ import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-cli
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {
   ScheduledTaskCreateInput, ScheduledTaskSettableStatus, ScheduledTaskView,
-} from '@deepseek-ai/dsh-plugins-scheduled-task/types'
+} from '@qihongmu/dsh-plugins-scheduled-task/types'
 import { ScheduledTaskCreate } from './ScheduledTaskCreate.tsx'
 import { ScheduledTasksList } from './ScheduledTasksList.tsx'
 import type { ScheduledTasksPanelFace } from './slots.ts'

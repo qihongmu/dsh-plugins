@@ -3,7 +3,7 @@ import type {
   RemoteResult,
   TypertRemoteContribution,
 } from '@deepseek-ai/dsh-typert-protocol'
-import type { ScheduledTaskCreateInput, ScheduledTaskDeleteResult, ScheduledTaskId, ScheduledTaskMutationResult, ScheduledTaskSettableStatus, ScheduledTaskUpdateInput, ScheduledTaskView } from '@deepseek-ai/dsh-plugins-scheduled-task/types'
+import type { ScheduledTaskCreateInput, ScheduledTaskDeleteResult, ScheduledTaskId, ScheduledTaskMutationResult, ScheduledTaskSettableStatus, ScheduledTaskUpdateInput, ScheduledTaskView } from '@qihongmu/dsh-plugins-scheduled-task/types'
 
 declare module '@deepseek-ai/dsh-typert-protocol' {
   interface TypertRemoteNamespace$7363686564756c65645461736b73 {

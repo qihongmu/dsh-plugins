@@ -1,5 +1,5 @@
-# @deepseek-ai/dsh-plugins-scheduled-task: plugins-scheduled-task — merged into the profile patch list by `dsh plugin` once
+# @qihongmu/dsh-plugins-scheduled-task: plugins-scheduled-task — merged into the profile patch list by `dsh plugin` once
 # this package is added to dsh.profile.bundles.
 - insert:
     - id: plugins-scheduled-task
-      name: '@deepseek-ai/dsh-plugins-scheduled-task'
+      name: '@qihongmu/dsh-plugins-scheduled-task'

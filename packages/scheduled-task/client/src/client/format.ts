@@ -1,6 +1,6 @@
 /** Shared formatting helpers for the scheduled-tasks UI. */
 
-import type { ScheduledTaskRule } from '@deepseek-ai/dsh-plugins-scheduled-task/types'
+import type { ScheduledTaskRule } from '@qihongmu/dsh-plugins-scheduled-task/types'
 import type { TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ScheduledTaskKey } from './locales.ts'
 

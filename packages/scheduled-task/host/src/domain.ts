@@ -2,7 +2,7 @@
  * Pure external scheduled-task rule building, advancement, view derivation, and
  * framing. Reuses only the shipped `@deepseek-ai/dsh-schedule` public API (the
  * record builders and `resolveEveryOccurrence`), so no DSH repo change is needed.
- * @module @deepseek-ai/dsh-plugins-scheduled-task/src/domain
+ * @module @qihongmu/dsh-plugins-scheduled-task/src/domain
  */
 
 import {

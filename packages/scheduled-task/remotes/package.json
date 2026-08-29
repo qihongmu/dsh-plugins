@@ -1,8 +1,8 @@
 {
-  "name": "@deepseek-ai/dsh-client-remotes-scheduled-task",
+  "name": "@qihongmu/dsh-client-remotes-scheduled-task",
   "version": "0.1.0",
   "license": "MIT",
-  "author": "Qihong <qihong.m.u@gmail.com>",
+  "author": "Qihong <qihong.m.u+dev@gmail.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/qihongmu/dsh-plugins.git",
@@ -48,11 +48,13 @@
     "@deepseek-ai/cordis": "*",
     "@deepseek-ai/dsh-api-gateway": "*",
     "@deepseek-ai/dsh-api-remotes": "*",
-    "@deepseek-ai/dsh-plugins-scheduled-task": "*",
+    "@qihongmu/dsh-plugins-scheduled-task": "*",
     "@deepseek-ai/dsh-typert-protocol": "*"
   },
   "files": [
     "lib",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "!lib/**/*.map",
+    "!lib/**/*.tsbuildinfo"
   ]
 }

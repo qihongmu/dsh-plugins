@@ -12,7 +12,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
   ScheduledTaskSettableStatus, ScheduledTaskView,
-} from '@deepseek-ai/dsh-plugins-scheduled-task/types'
+} from '@qihongmu/dsh-plugins-scheduled-task/types'
 import type { ScheduledTaskKey } from './locales.ts'
 import { localizedDate, ruleSummary } from './format.ts'
 import type { ScheduledTaskTranslate } from './format.ts'

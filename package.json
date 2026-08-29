@@ -2,7 +2,7 @@
   "name": "dsh-plugins",
   "version": "0.1.0",
   "license": "MIT",
-  "author": "Qihong <qihong.m.u@gmail.com>",
+  "author": "Qihong <qihong.m.u+dev@gmail.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/qihongmu/dsh-plugins.git"
@@ -12,6 +12,7 @@
   "description": "User-authored external plugins for DeepSeek Harness, loaded via a dsh profile (no changes to the dsh library). Each plugin lives under packages/<plugin>/ with a host half and a client half.",
   "scripts": {
     "build": "npm run build:host && npm run build:client",
+    "build:web": "node scripts/build-web.mjs",
     "build:host": "node node_modules/typescript/lib/tsc.js -b tsconfig.host.json",
     "build:client": "node node_modules/typescript/lib/tsc.js -b tsconfig.client.json",
     "typecheck": "npm run build:host && npm run build:client",

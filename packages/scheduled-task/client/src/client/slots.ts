@@ -7,10 +7,10 @@ import type { TypertRemoteNamespaceMap } from '@deepseek-ai/dsh-typert-protocol'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 // Type-only: pulls the client 服务' `Context` merge (ctx.remote behavior) and the
 // locale/slot Context augments; the scheduledTasks namespace merge comes from the
-// vendored `@deepseek-ai/dsh-plugins-scheduled-task/remote`.
+// vendored `@qihongmu/dsh-plugins-scheduled-task/remote`.
 import type {} from '@deepseek-ai/dsh-client-runtime/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type {} from '@deepseek-ai/dsh-plugins-scheduled-task/remote'
+import type {} from '@qihongmu/dsh-plugins-scheduled-task/remote'
 
 /** The typed `scheduledTasks` Remote namespace the panel drives. */
 export type ScheduledTasksRemote = TypertRemoteNamespaceMap['scheduledTasks']

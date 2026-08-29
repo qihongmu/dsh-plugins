@@ -1,17 +1,17 @@
 {
-  "name": "@deepseek-ai/dsh-plugins-scheduled-task-bundle",
+  "name": "@qihongmu/dsh-plugins-scheduled-task-bundle",
   "version": "0.1.0",
   "license": "MIT",
-  "author": "Qihong <qihong.m.u@gmail.com>",
+  "author": "Qihong <qihong.m.u+dev@gmail.com>",
   "description": "Aggregate install bundle for the scheduled-task plugin: pulls the host/remotes/client halves and mounts all three with a single `dsh plugin add`.",
   "type": "module",
   "files": [
     "cordis.patch.yml"
   ],
   "dependencies": {
-    "@deepseek-ai/dsh-plugins-scheduled-task": "^0.1.0",
-    "@deepseek-ai/dsh-client-remotes-scheduled-task": "^0.1.0",
-    "@deepseek-ai/dsh-client-ui-scheduled-task": "^0.1.0"
+    "@qihongmu/dsh-plugins-scheduled-task": "^0.1.0",
+    "@qihongmu/dsh-client-remotes-scheduled-task": "^0.1.0",
+    "@qihongmu/dsh-client-ui-scheduled-task": "^0.1.0"
   },
   "dsh": {
     "bundle": {

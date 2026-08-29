@@ -17,7 +17,7 @@ const packages = references
     const manifest = JSON.parse(readFileSync(join(root, referencePath, 'package.json'), 'utf8'))
     return { name: manifest.name, referencePath }
   })
-  .filter(candidate => typeof candidate.name === 'string' && candidate.name.startsWith('@deepseek-ai/'))
+  .filter(candidate => typeof candidate.name === 'string' && candidate.name.startsWith('@qihongmu/'))
 
 if (packages.length === 0) {
   console.log('no host plugin packages discovered from tsconfig.host.json references')

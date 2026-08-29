@@ -14,7 +14,7 @@
 import { defineConfig } from 'tsdown'
 
 /** Plugin id stamped into the __ModuleLoader__.load registration handoff. */
-const PLUGIN_ID = '@deepseek-ai/dsh-client-remotes-scheduled-task'
+const PLUGIN_ID = '@qihongmu/dsh-client-remotes-scheduled-task'
 
 export default defineConfig({
   name: `${PLUGIN_ID}/client`,
@@ -23,7 +23,9 @@ export default defineConfig({
   format: 'cjs',
   platform: 'browser',
   dts: false,
-  sourcemap: true,
+  // No sourcemaps in the shipped bundle: the tarball excludes *.map, so a
+  // sourceMappingURL comment here would only be a dangling reference.
+  sourcemap: false,
   clean: false,
   // Pin `lib/client.js`: the module table resolves exports["./client"] there.
   outputOptions: {

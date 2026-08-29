@@ -13,6 +13,8 @@ node_modules/
 
 # OS noise
 .DS_Store
+# npm pack output (release verification / publishing)
+/dist/
 # Generated tsconfig shims pointing at the local DSH checkout (npm run bootstrap)
 tsconfig.dsh.generated.json
 tsconfig.dsh.client.generated.json

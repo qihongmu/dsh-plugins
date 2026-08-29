@@ -1,7 +1,7 @@
 /**
  * The external scheduled-task domain declaration: record schema and the
  * `defineDomain` spec the service opens (mirrors the storage-domain pattern).
- * @module @deepseek-ai/dsh-plugins-scheduled-task/src/spec
+ * @module @qihongmu/dsh-plugins-scheduled-task/src/spec
  */
 
 import { z } from 'zod'

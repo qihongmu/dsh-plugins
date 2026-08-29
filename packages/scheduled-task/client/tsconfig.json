@@ -3,12 +3,13 @@
   "compilerOptions": {
     "composite": true,
     "incremental": true,
+    "sourceMap": false,
     "noEmit": false,
     "rootDir": "src",
     "outDir": "lib/types",
     "paths": {
-      "@deepseek-ai/dsh-plugins-scheduled-task/remote": ["../host/lib/typert.remote-client.d.ts"],
-      "@deepseek-ai/dsh-plugins-scheduled-task/types": ["../host/lib/types/types.d.ts"]
+      "@qihongmu/dsh-plugins-scheduled-task/remote": ["../host/lib/typert.remote-client.d.ts"],
+      "@qihongmu/dsh-plugins-scheduled-task/types": ["../host/lib/types/types.d.ts"]
     }
   },
   "include": ["src"]
