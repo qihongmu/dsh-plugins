@@ -1,0 +1,79 @@
+name: Publish
+
+# Release publishing via npm Trusted Publishing (OIDC): the run mints an
+# OIDC token that npm matches against each package's Trusted Publisher
+# config on npmjs.com (repo + this workflow file). No npm token secret
+# exists or is needed. Provenance attestations are generated automatically
+# for public repositories.
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      # Mint the OIDC token npm authenticates (required; docs.npmjs.com/trusted-publishers)
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      # The workspace builds against a local DeepSeek Harness checkout:
+      # clone it as the sibling directory `npm run bootstrap` expects.
+      # Pinned to the release line this plugin is certified against (README
+      # compatibility note) — bump together with the README when re-certifying.
+      - name: Check out DeepSeek Harness
+        uses: actions/checkout@v4
+        with:
+          repository: deepseek-ai/deepseek-harness
+          ref: dsh-v0.1.1-rc.2
+          path: deepseek-harness
+
+      - uses: pnpm/action-setup@v4
+        with:
+          package_json_file: deepseek-harness/package.json
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: deepseek-harness/pnpm-lock.yaml
+
+      # Trusted publishing requires npm >= 11.5.1; Node 22 images ship npm 10.x.
+      - name: Ensure npm supports trusted publishing
+        run: npm install -g npm@latest
+
+      - name: Build DeepSeek Harness (provides toolchain + resolution facade)
+        working-directory: deepseek-harness
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - name: Tag must match package version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          HOST_VERSION=$(node -p "require('./packages/scheduled-task/host/package.json').version")
+          [ "$TAG" = "$HOST_VERSION" ] || { echo "tag v$TAG != manifest version $HOST_VERSION — bump the four manifests first"; exit 1; }
+
+      - name: Build gates (browser bundles ship in the tarballs)
+        run: |
+          npm run bootstrap
+          npm run build
+          npm run build:web
+          npm test
+          npm run verify
+
+      # Order matters: the bundle depends on the three halves, so it ships last.
+      - name: Publish host → remotes → client → bundle
+        run: |
+          for p in host remotes client bundle; do
+            npm publish --access public "./packages/scheduled-task/$p"
+          done
