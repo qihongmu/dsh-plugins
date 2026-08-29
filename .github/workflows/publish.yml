@@ -72,8 +72,17 @@ jobs:
           npm run verify
 
       # Order matters: the bundle depends on the three halves, so it ships last.
+      # Auth: if the NPM_TOKEN secret exists (bootstrap phase — the packages are
+      # not yet on npm, so no Trusted Publisher config can exist) publish with
+      # it; otherwise fall through to OIDC trusted publishing (steady state,
+      # once each package's npm Settings → Trusted Publisher points here).
       - name: Publish host → remotes → client → bundle
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
+          fi
           for p in host remotes client bundle; do
             npm publish --access public "./packages/scheduled-task/$p"
           done

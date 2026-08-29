@@ -17,10 +17,15 @@ jobs:
 
       # The workspace builds against a local DeepSeek Harness checkout:
       # clone it as the sibling directory `npm run bootstrap` expects.
+      # Pinned to the release line this plugin is certified against (README
+      # compatibility note): the dsh default branch has moved past it and
+      # removed packages the plugin builds against (e.g. dsh-client-runtime).
+      # Bump together with the README when re-certifying a newer dsh.
       - name: Check out DeepSeek Harness
         uses: actions/checkout@v4
         with:
           repository: deepseek-ai/deepseek-harness
+          ref: dsh-v0.1.1-rc.2
           path: deepseek-harness
 
       # Read the pinned pnpm version from the UPSTREAM manifest — this repo has
