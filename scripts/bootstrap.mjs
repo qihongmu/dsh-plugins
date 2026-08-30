@@ -35,6 +35,7 @@ const SCOPED_PACKAGES = [
   'dsh-brand',
   'dsh-client-locale',
   'dsh-client-ui-primitives',
+  'dsh-client-ui-renderer',
   'dsh-client-ui-sidebar',
   'dsh-client-ui-slots',
   'dsh-invariants',
