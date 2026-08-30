@@ -5,7 +5,7 @@
   "author": "Qihong <qihong.m.u+dev@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/qihongmu/dsh-plugins.git",
+    "url": "https://github.com/qihongmu/dsh-plugins.git",
     "directory": "packages/scheduled-task/host"
   },
   "description": "External user plugin: global scheduled tasks for DeepSeek Harness (host Service + scheduler + Remote surface), no changes to the dsh library.",
