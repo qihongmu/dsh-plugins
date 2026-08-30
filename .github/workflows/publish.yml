@@ -80,6 +80,13 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          # OIDC triage: npm silently skips trusted publishing (and later fails
+          # with ENEEDAUTH) both when the runner withheld the id-token
+          # permission and when the npm-side exchange rejects the workflow
+          # (e.g. trusted publishing requires a PUBLIC GitHub repository).
+          echo "npm $(npm --version)"
+          echo "ACTIONS_ID_TOKEN_REQUEST_URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:+SET}"
+          echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+SET}"
           if [ -n "$NPM_TOKEN" ]; then
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
           fi
