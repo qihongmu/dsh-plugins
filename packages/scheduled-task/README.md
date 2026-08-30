@@ -12,7 +12,7 @@ One command pulls all three halves (host service, remotes assembly, browser UI) 
 dsh plugin --profile web add @qihongmu/dsh-plugins-scheduled-task-bundle
 ```
 
-Verified against DeepSeek Harness `v0.1.1-rc.2` (see the repository root README for prerequisites and compatibility). Prefer installing the **bundle or the individual halves, not both**; install the halves separately only for fine-grained control from a source checkout.
+Verified against DeepSeek Harness `dsh-v0.1.2-alpha.2` (see the repository root README for prerequisites and compatibility). Prefer installing the **bundle or the individual halves, not both**; install the halves separately only for fine-grained control from a source checkout.
 
 ## Screenshots
 

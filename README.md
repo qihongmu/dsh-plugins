@@ -12,7 +12,14 @@ External plugins for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-
 
 ## Install
 
-Requires Node.js ≥ 22 and pnpm. **Compatibility:** verified against DeepSeek Harness `v0.1.1-rc.2`; newer `dsh` releases may not work yet.
+Requires Node.js ≥ 22 and pnpm. **Plugin ↔ dsh version mapping** — check yours with `dsh --version`:
+
+| Plugin version | Compatible dsh | dsh install |
+| -------------- | -------------- | ----------- |
+| **0.1.1-alpha.2** | `dsh-v0.1.2-alpha.2` (the 0.1.2-alpha line; only alpha.2 is verified) | `npm i -g @deepseek-ai/dsh@0.1.2-alpha.2` — the alpha line is **not** npm `latest`, pin it explicitly |
+| **0.1.0** | dsh ≤ `0.1.1-rc.2` (verified on `dsh-v0.1.1-rc.2`) | `npm i -g @deepseek-ai/dsh` (`latest` dist-tag) |
+
+Running dsh from a source checkout? Match the checkout tag to the table above — plugin `0.1.0` fails to boot on the 0.1.2-alpha line (upstream removed `dsh-client-runtime` / `ConnectionHandle.api`), and plugin `0.1.1-alpha.2` is required from `dsh-v0.1.2-alpha.1` on.
 
 ```sh
 dsh plugin --profile web add @qihongmu/dsh-plugins-scheduled-task-bundle

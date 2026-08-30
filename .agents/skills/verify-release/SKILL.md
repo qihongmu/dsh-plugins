@@ -29,14 +29,17 @@ and after cleanup `diff` it against a fresh snapshot — zero changes is a repor
 
 ## 0. Version alignment (do this first)
 
-The published DSH (`latest` on npm) can lag the local `deepseek-harness` checkout.
-A checkout that is AHEAD breaks the plugin build (renamed/removed packages —
-e.g. 0.1.2-alpha.1 removed `@deepseek-ai/dsh-client-runtime` which the client
-half type-imports). Check: `npm view @deepseek-ai/dsh dist-tags` vs
-`git -C ../deepseek-harness log --oneline -1`.
+The published DSH (`latest` on npm) can lag the local `deepseek-harness`
+checkout, and either direction of skew can break the plugin build (renamed or
+removed packages — the 0.1.2-alpha.1 line removed `@deepseek-ai/dsh-client-runtime`
+and `ConnectionHandle.api`, which plugin 0.1.0 used). This plugin release
+(0.1.1-alpha.2) is certified against the tag `dsh-v0.1.2-alpha.2` — the same ref
+pinned in `.github/workflows/ci.yml` and `scripts/verify-env.sh`. Check:
+`git -C ../deepseek-harness describe --tags` vs that ref.
 
-If they diverge, build against a worktree of the published tag and pass it as
-`DSH_ROOT` to every later command:
+If the sibling checkout is not exactly at the pinned tag, build against a
+worktree of the tag and pass it as `DSH_ROOT` to every later command
+(`DSH_REF` defaults to the pinned tag):
 
 ```sh
 scripts/verify-env.sh worktree /tmp/dsh-verify/dsh-src   # worktree + install + build

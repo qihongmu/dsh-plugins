@@ -12,7 +12,14 @@
 
 ## 安装
 
-前置要求：Node.js ≥ 22、[pnpm](https://pnpm.io/)。**兼容性**：已在 DeepSeek Harness `v0.1.1-rc.2` 上验证；更新的 `dsh` 版本尚不保证可用。
+前置要求：Node.js ≥ 22、[pnpm](https://pnpm.io/)。**插件 ↔ dsh 版本对应**（用 `dsh --version` 查看自己的版本）：
+
+| 插件版本 | 兼容的 dsh | dsh 安装方式 |
+| -------- | ---------- | ------------ |
+| **0.1.1-alpha.2** | `dsh-v0.1.2-alpha.2`（0.1.2-alpha 线，仅实测 alpha.2） | `npm i -g @deepseek-ai/dsh@0.1.2-alpha.2` —— alpha 线**不是** npm 的 `latest`，必须显式指定版本 |
+| **0.1.0** | dsh ≤ `0.1.1-rc.2`（在 `dsh-v0.1.1-rc.2` 上验证） | `npm i -g @deepseek-ai/dsh`（`latest` dist-tag） |
+
+从源码 checkout 跑 dsh？请让 checkout 的 tag 与上表对应——插件 `0.1.0` 在 0.1.2-alpha 线上无法启动（上游删除了 `dsh-client-runtime` / `ConnectionHandle.api`）；自 `dsh-v0.1.2-alpha.1` 起需要插件 `0.1.1-alpha.2`。
 
 ```sh
 dsh plugin --profile web add @qihongmu/dsh-plugins-scheduled-task-bundle

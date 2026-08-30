@@ -17,12 +17,12 @@
 #                     routes did not register — see SKILL.md "Known pitfall").
 #
 # Usage: scripts/verify-env.sh <subcommand> [args]
-# Env:   VERIFY_DIR (default /tmp/dsh-verify), DSH_REF (default dsh-v0.1.1-rc.2),
+# Env:   VERIFY_DIR (default /tmp/dsh-verify), DSH_REF (default dsh-v0.1.2-alpha.2),
 #        DSH_REPO (default sibling checkout)
 set -eu
 
 VERIFY_DIR=${VERIFY_DIR:-/tmp/dsh-verify}
-DSH_REF=${DSH_REF:-dsh-v0.1.1-rc.2}
+DSH_REF=${DSH_REF:-dsh-v0.1.2-alpha.2}
 DSH_REPO=${DSH_REPO:-"$(dirname "$PWD")/deepseek-harness"}
 REPO_ROOT=$PWD
 
@@ -79,20 +79,29 @@ case "$cmd" in
     done
     ;;
   probe)
-    port=${1:?usage: verify-env.sh probe <port>}
+    port=${1:?usage: verify-env.sh probe <port> [token]}
     base="http://127.0.0.1:$port"
-    fetch() {
-      code=$(curl -s -o /dev/null -w "%{http_code}" "$@" 2>/dev/null) || true
-      echo "${code:-000}"
-    }
-    for path in "/" \
-      "/plugins/@qihongmu/dsh-client-ui-scheduled-task/client.js" \
-      "/plugins/@qihongmu/dsh-client-remotes-scheduled-task/client.js"; do
-      echo "$path: $(fetch "$base$path")"
+    # dsh >= 0.1.2-alpha: the web root answers 401 without the boot token, plugin
+    # bundles serve ONLY through the combo route discovered from the boot page,
+    # and API calls need the auth cookie the token exchange sets.
+    token=${2:-}
+    if [ -z "$token" ] && [ -f "$VERIFY_DIR/web.log" ]; then
+      token=$(grep -o 'token=[A-Za-z0-9]*' "$VERIFY_DIR/web.log" | head -1 | cut -d= -f2)
+    fi
+    [ -n "$token" ] || die "probe: no token (pass it, or boot with the log at $VERIFY_DIR/web.log)"
+    jar="$VERIFY_DIR/cookies.txt"
+    code=$(curl -s -c "$jar" -L -o "$VERIFY_DIR/boot.html" -w '%{http_code}' "$base/?token=$token")
+    echo "/ (with token): ${code:-000}"
+    for id in "@qihongmu/dsh-client-ui-scheduled-task" "@qihongmu/dsh-client-remotes-scheduled-task"; do
+      grep -q "$id/client.js" "$VERIFY_DIR/boot.html" \
+        && echo "boot graph: $id ✓" \
+        || echo "boot graph: $id MISSING"
     done
     # A healthy route answers with a JSON envelope (even a validation error);
-    # a literal 404 body means the host half's typert routes never registered.
-    echo "/api/scheduledTasks/list: $(fetch -X POST "$base/api/scheduledTasks/list" -H "Content-Type: application/json" -d '{}')"
+    # an HTML error page or empty body means the host half's typert routes
+    # never registered.
+    echo "/api/scheduledTasks/list: $(curl -s -b "$jar" -X POST "$base/api/scheduledTasks/list" \
+      -H 'Content-Type: application/json' -d '{}' | head -c 60)"
     ;;
   *)
     grep -E '^#   [a-z]' "$0" | sed 's/^#   //'

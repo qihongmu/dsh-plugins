@@ -5,10 +5,11 @@
 import type { TypertRemoteNamespaceMap } from '@deepseek-ai/dsh-typert-protocol'
 // Type-only: pulls the `sidebar.footer.action` SlotMap owner poll (the `wide` prop).
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
-// Type-only: pulls the client 服务' `Context` merge (ctx.remote behavior) and the
-// locale/slot Context augments; the scheduledTasks namespace merge comes from the
-// vendored `@qihongmu/dsh-plugins-scheduled-task/remote`.
-import type {} from '@deepseek-ai/dsh-client-runtime/client'
+// Type-only: pulls the Remote assembly's `Context` merge (ctx.remote) and the
+// first-party namespace merges (`session`, read for the model catalog); the
+// scheduledTasks namespace merge comes from the vendored
+// `@qihongmu/dsh-plugins-scheduled-task/remote`.
+import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@qihongmu/dsh-plugins-scheduled-task/remote'
 
@@ -48,9 +49,9 @@ export interface ScheduledTasksPanelFace {
   /** List registered workspaces (projects) in registry display order. */
   readonly listProjects: () => Promise<readonly ScheduledTaskProjectOption[]>
   /**
-   * Flatten the current conversation session's advisory model catalog into
-   * selectable rows. Empty when no conversation session is open (the task then
-   * runs with the deployment default model).
+   * Flatten the Host-generation advisory model catalog into selectable rows.
+   * Session-free: the catalog covers every currently routable provider, and an
+   * empty catalog leaves the task on the deployment default model.
    */
   readonly listModels: () => Promise<readonly ScheduledTaskModelOption[]>
 }

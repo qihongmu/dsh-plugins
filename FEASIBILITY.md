@@ -73,7 +73,9 @@ This restores the full host `@Remote` Service + browser-UI client through a thre
   `ctx.remote.$mount(...)` (`inject = ['remote']`), the plugin-scoped counterpart of the in-repo
   `dsh-api-remotes` assembly.
 - `packages/scheduled-task/client/` — browser UI registering the `sidebar.footer.action` entry;
-  `tsdown` bundles to `lib/client.js` (served at `/plugins/<id>/client.js`).
+  `tsdown` bundles to `lib/client.js` (served through dsh's combo endpoint
+  `/plugins/??<id>/client.js&rev=…`; a direct GET `/plugins/<id>/client.js` 404s since dsh
+  v0.1.2-alpha.1 — only the combo route resolves plugin bundles).
 
 ## Cordis inject-isolation lesson
 

@@ -21,7 +21,7 @@ services carrying a `typertRemote` binding. When the halves are installed as
 individual bundle layers, the host plugin mounts under `include:plugins-scheduled-task`
 in a context whose services the gateway's src-claims pass does not see, so the
 endpoint is unclaimed → HTTP 404, while the browser halves still render (the
-client bundle is served over `/plugins/<id>/client.js`, a different mechanism).
+client bundle is served over the plugin combo URL, a different mechanism).
 With the aggregate bundle the same rows register through a single layer and the
 claims pass sees the service. This is an upstream interaction bug, not a plugin
 defect — worth reporting to deepseek-harness with the table above.
