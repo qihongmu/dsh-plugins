@@ -84,5 +84,14 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
           fi
           for p in host remotes client bundle; do
-            npm publish --access public "./packages/scheduled-task/$p"
+            dir="./packages/scheduled-task/$p"
+            v=$(node -p "require('$dir/package.json').version")
+            # npm refuses to stamp a prerelease as `latest` without an explicit
+            # tag; ship those under the `alpha` dist-tag (mirrors the dsh line
+            # the release is certified against).
+            case "$v" in
+              *-*) tag="--tag alpha" ;;
+              *)   tag="" ;;
+            esac
+            npm publish --access public $tag "$dir"
           done
