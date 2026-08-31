@@ -87,6 +87,21 @@ jobs:
           echo "npm $(npm --version)"
           echo "ACTIONS_ID_TOKEN_REQUEST_URL: ${ACTIONS_ID_TOKEN_REQUEST_URL:+SET}"
           echo "ACTIONS_ID_TOKEN_REQUEST_TOKEN: ${ACTIONS_ID_TOKEN_REQUEST_TOKEN:+SET}"
+          # Ask the registry directly why the exchange rejects us: npm buries
+          # this error and surfaces only ENEEDAUTH on the publish command.
+          idtok=$(curl -sS -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=npm:registry.npmjs.org" \
+            | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>process.stdout.write((JSON.parse(d).value)||''))")
+          if [ -n "$idtok" ]; then
+            for enc in '%2F' '%2f'; do
+              code=$(curl -sS -o /tmp/probe.json -w '%{http_code}' -X POST \
+                "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/@qihongmu${enc}dsh-plugins-scheduled-task" \
+                -H "Authorization: Bearer $idtok" -H "Content-Type: application/json")
+              echo "exchange $enc -> $code $(head -c 300 /tmp/probe.json)"
+            done
+          else
+            echo "no id token minted"
+          fi
           if [ -n "$NPM_TOKEN" ]; then
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
           fi
