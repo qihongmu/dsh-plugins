@@ -10,11 +10,14 @@
 #   registry up     — start a throwaway verdaccio on :4873, create a user, write
 #                     $VERIFY_DIR/npmrc for npm publish and the profile .npmrc.
 #   registry down   — remove the verdaccio container.
-#   publish         — npm pack the four packages into dist/ and publish them to
-#                     the local verdaccio (run `registry up` first).
-#   probe <port>    — smoke-check a running `dsh web`: page, both plugin bundles,
-#                     and the scheduledTasks API route (404 means the host half's
-#                     routes did not register — see SKILL.md "Known pitfall").
+#   publish [plugin] — npm pack the four packages into dist/ and publish them to
+#                     the local verdaccio (run `registry up` first; plugin
+#                     defaults to scheduled-task).
+#   probe <port> [token] [plugin]
+#                     — smoke-check a running `dsh web`: page, both plugin
+#                     bundles, and the host half's API route (404 means the
+#                     host half's routes did not register — see SKILL.md
+#                     "Known pitfall").
 #
 # Usage: scripts/verify-env.sh <subcommand> [args]
 # Env:   VERIFY_DIR (default /tmp/dsh-verify), DSH_REF (default dsh-v0.1.2-rc.1),
@@ -68,18 +71,22 @@ case "$cmd" in
     esac
     ;;
   publish)
+    plugin=${1:-scheduled-task}
+    case "$plugin" in scheduled-task|token-tracing) ;; *) die "publish [scheduled-task|token-tracing]" ;; esac
     [ -f "$VERIFY_DIR/npmrc" ] || die "run `verify-env.sh registry up` first"
     mkdir -p dist
+    # Scoped to this plugin so stale tarballs of the other plugin never republish.
+    rm -f "$REPO_ROOT"/dist/*"$plugin"*.tgz
     for p in host remotes client bundle; do
-      (cd "packages/scheduled-task/$p" && npm pack --pack-destination "$REPO_ROOT/dist" >/dev/null)
+      (cd "packages/$plugin/$p" && npm pack --pack-destination "$REPO_ROOT/dist" >/dev/null)
     done
-    for t in "$REPO_ROOT"/dist/*.tgz; do
+    for t in "$REPO_ROOT"/dist/*"$plugin"*.tgz; do
       # "./" prefix is required: a bare relative path is treated as a git spec
       npm publish --registry http://localhost:4873 --userconfig "$VERIFY_DIR/npmrc" "./${t#"$REPO_ROOT"/}"
     done
     ;;
   probe)
-    port=${1:?usage: verify-env.sh probe <port> [token]}
+    port=${1:?usage: verify-env.sh probe <port> [token] [plugin]}
     base="http://127.0.0.1:$port"
     # dsh >= 0.1.2-alpha: the web root answers 401 without the boot token, plugin
     # bundles serve ONLY through the combo route discovered from the boot page,
@@ -89,10 +96,16 @@ case "$cmd" in
       token=$(grep -o 'token=[A-Za-z0-9]*' "$VERIFY_DIR/web.log" | head -1 | cut -d= -f2)
     fi
     [ -n "$token" ] || die "probe: no token (pass it, or boot with the log at $VERIFY_DIR/web.log)"
+    plugin=${3:-scheduled-task}
+    case "$plugin" in scheduled-task|token-tracing) ;; *) die "probe plugin must be scheduled-task or token-tracing" ;; esac
+    case "$plugin" in
+      scheduled-task) api=/api/scheduledTasks/list ;;
+      token-tracing)  api=/api/tokenTracing/sessions ;;
+    esac
     jar="$VERIFY_DIR/cookies.txt"
     code=$(curl -s -c "$jar" -L -o "$VERIFY_DIR/boot.html" -w '%{http_code}' "$base/?token=$token")
     echo "/ (with token): ${code:-000}"
-    for id in "@qihongmu/dsh-client-ui-scheduled-task" "@qihongmu/dsh-client-remotes-scheduled-task"; do
+    for id in "@qihongmu/dsh-client-ui-$plugin" "@qihongmu/dsh-client-remotes-$plugin"; do
       grep -q "$id/client.js" "$VERIFY_DIR/boot.html" \
         && echo "boot graph: $id ✓" \
         || echo "boot graph: $id MISSING"
@@ -100,7 +113,7 @@ case "$cmd" in
     # A healthy route answers with a JSON envelope (even a validation error);
     # an HTML error page or empty body means the host half's typert routes
     # never registered.
-    echo "/api/scheduledTasks/list: $(curl -s -b "$jar" -X POST "$base/api/scheduledTasks/list" \
+    echo "$api: $(curl -s -b "$jar" -X POST "$base$api" \
       -H 'Content-Type: application/json' -d '{}' | head -c 60)"
     ;;
   *)

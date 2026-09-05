@@ -5,11 +5,24 @@ name: Publish
 # config on npmjs.com (repo + this workflow file). No npm token secret
 # exists or is needed. Provenance attestations are generated automatically
 # for public repositories.
+#
+# Tag prefixes route to the plugin: `v*` → packages/scheduled-task,
+# `token-tracing-v*` → packages/token-tracing. A tag must equal the mapped
+# plugin's host manifest version. Each npm package carries its own Trusted
+# Publisher entry pointing at this repo + workflow file.
 
 on:
   workflow_dispatch:
+    inputs:
+      plugin:
+        description: Plugin to publish (a pushed tag resolves its plugin from the prefix)
+        type: choice
+        options:
+          - scheduled-task
+          - token-tracing
+        default: scheduled-task
   push:
-    tags: ['v*']
+    tags: ['v*', 'token-tracing-v*']
 
 concurrency:
   group: publish-${{ github.ref }}
@@ -24,6 +37,19 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve the plugin from the tag prefix (or the dispatch input)
+        run: |
+          case "${GITHUB_REF_NAME:-}" in
+            token-tracing-v*) plugin=token-tracing ;;
+            v*) plugin=scheduled-task ;;
+            *) plugin="${{ inputs.plugin }}" ;;
+          esac
+          case "$plugin" in
+            scheduled-task|token-tracing) ;;
+            *) echo "cannot map ref '$GITHUB_REF_NAME' to a plugin"; exit 1 ;;
+          esac
+          echo "PLUGIN=$plugin" >> "$GITHUB_ENV"
 
       # The workspace builds against a local DeepSeek Harness checkout:
       # clone it as the sibling directory `npm run bootstrap` expects.
@@ -59,9 +85,10 @@ jobs:
       - name: Tag must match package version
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          TAG="${GITHUB_REF_NAME#v}"
-          HOST_VERSION=$(node -p "require('./packages/scheduled-task/host/package.json').version")
-          [ "$TAG" = "$HOST_VERSION" ] || { echo "tag v$TAG != manifest version $HOST_VERSION — bump the four manifests first"; exit 1; }
+          TAG="${GITHUB_REF_NAME#token-tracing-v}"
+          TAG="${TAG#v}"
+          HOST_VERSION=$(node -p "require('./packages/${{ env.PLUGIN }}/host/package.json').version")
+          [ "$TAG" = "$HOST_VERSION" ] || { echo "tag $GITHUB_REF_NAME != manifest version $HOST_VERSION — bump the four manifests first"; exit 1; }
 
       - name: Build gates (browser bundles ship in the tarballs)
         run: |
@@ -95,7 +122,7 @@ jobs:
           if [ -n "$idtok" ]; then
             for enc in '%2F' '%2f'; do
               code=$(curl -sS -o /tmp/probe.json -w '%{http_code}' -X POST \
-                "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/@qihongmu${enc}dsh-plugins-scheduled-task" \
+                "https://registry.npmjs.org/-/npm/v1/oidc/token/exchange/package/@qihongmu${enc}dsh-plugins-${PLUGIN}" \
                 -H "Authorization: Bearer $idtok" -H "Content-Type: application/json")
               echo "exchange $enc -> $code $(head -c 300 /tmp/probe.json)"
             done
@@ -106,7 +133,7 @@ jobs:
             echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > ~/.npmrc
           fi
           for p in host remotes client bundle; do
-            dir="./packages/scheduled-task/$p"
+            dir="./packages/${PLUGIN}/$p"
             v=$(node -p "require('$dir/package.json').version")
             # npm refuses to stamp a prerelease as `latest` without an explicit
             # tag; ship those under the `alpha` dist-tag (mirrors the dsh line
