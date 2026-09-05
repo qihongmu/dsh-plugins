@@ -18,7 +18,7 @@ Requires Node.js ≥ 22 and pnpm. **Plugin ↔ dsh version mapping** — check y
 | Plugin version | Compatible dsh | dsh install |
 | -------------- | -------------- | ----------- |
 | dev (Scheduled Tasks, unreleased) | `dsh-v0.1.2-rc.1` (gates + real-data browser acceptance green) | source checkout at tag `dsh-v0.1.2-rc.1` |
-| **Token Tracing 0.1.0** | `dsh-v0.1.2-rc.1` (verified on rc.1) | `npm i -g @deepseek-ai/dsh` (`latest` dist-tag) |
+| **Token Tracing 0.1.1** | `dsh-v0.1.2-rc.1` (verified on rc.1) | `npm i -g @deepseek-ai/dsh` (`latest` dist-tag) |
 | **Scheduled Tasks 0.1.1-alpha.2** | `dsh-v0.1.2-alpha.2` (the 0.1.2-alpha line; only alpha.2 is verified) | `npm i -g @deepseek-ai/dsh@0.1.2-alpha.2` — the alpha line is **not** npm `latest`, pin it explicitly |
 | **Scheduled Tasks 0.1.0** | dsh ≤ `0.1.1-rc.2` (verified on `dsh-v0.1.1-rc.2`) | `npm i -g @deepseek-ai/dsh@0.1.1-rc.2` |
 

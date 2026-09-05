@@ -1,6 +1,6 @@
 {
   "name": "@qihongmu/dsh-plugins-token-tracing-bundle",
-  "version": "0.1.1-alpha.1",
+  "version": "0.1.1",
   "license": "MIT",
   "author": "Qihong <qihong.m.u+dev@gmail.com>",
   "description": "Aggregate install bundle for the token-tracing plugin: pulls the host/remotes/client halves and mounts all three with a single `dsh plugin add`.",
@@ -9,9 +9,9 @@
     "cordis.patch.yml"
   ],
   "dependencies": {
-    "@qihongmu/dsh-client-remotes-token-tracing": "^0.1.1-alpha.1",
-    "@qihongmu/dsh-client-ui-token-tracing": "^0.1.1-alpha.1",
-    "@qihongmu/dsh-plugins-token-tracing": "^0.1.1-alpha.1"
+    "@qihongmu/dsh-client-remotes-token-tracing": "^0.1.1",
+    "@qihongmu/dsh-client-ui-token-tracing": "^0.1.1",
+    "@qihongmu/dsh-plugins-token-tracing": "^0.1.1"
   },
   "dsh": {
     "bundle": {

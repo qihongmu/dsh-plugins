@@ -18,7 +18,7 @@
 | 插件版本 | 兼容的 dsh | dsh 安装方式 |
 | -------- | ---------- | ------------ |
 | 开发版（定时任务，未发布） | `dsh-v0.1.2-rc.1`（门禁 + 真实数据浏览器验收通过） | 源码检出，tag `dsh-v0.1.2-rc.1` |
-| **Token 追踪 0.1.0** | `dsh-v0.1.2-rc.1`（rc.1 上验证） | `npm i -g @deepseek-ai/dsh`（`latest` dist-tag） |
+| **Token 追踪 0.1.1** | `dsh-v0.1.2-rc.1`（rc.1 上验证） | `npm i -g @deepseek-ai/dsh`（`latest` dist-tag） |
 | **定时任务 0.1.1-alpha.2** | `dsh-v0.1.2-alpha.2`（0.1.2-alpha 线，仅实测 alpha.2） | `npm i -g @deepseek-ai/dsh@0.1.2-alpha.2` —— alpha 线**不是** npm 的 `latest`，必须显式指定版本 |
 | **定时任务 0.1.0** | dsh ≤ `0.1.1-rc.2`（在 `dsh-v0.1.1-rc.2` 上验证） | `npm i -g @deepseek-ai/dsh@0.1.1-rc.2` |
 
