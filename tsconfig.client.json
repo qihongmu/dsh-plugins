@@ -8,6 +8,8 @@
   "files": [],
   "references": [
     { "path": "./packages/scheduled-task/client" },
-    { "path": "./packages/scheduled-task/remotes" }
+    { "path": "./packages/scheduled-task/remotes" },
+    { "path": "./packages/token-tracing/client" },
+    { "path": "./packages/token-tracing/remotes" }
   ]
 }

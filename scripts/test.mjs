@@ -18,6 +18,9 @@ if (!existsSync(tsxBin)) {
 const testRoots = [
   join(repoRoot, 'packages', 'scheduled-task', 'host', 'tests'),
   join(repoRoot, 'packages', 'scheduled-task', 'client', 'tests'),
+  join(repoRoot, 'packages', 'token-tracing', 'host', 'tests'),
+  join(repoRoot, 'packages', 'token-tracing', 'client', 'tests'),
+  join(repoRoot, 'packages', 'token-tracing', 'remotes', 'tests'),
 ]
 const files = testRoots.flatMap(root => readdirSync(root)
   .filter(file => file.endsWith('.test.ts'))

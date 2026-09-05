@@ -1,0 +1,16 @@
+{
+  "extends": "../../../tsconfig.dsh.client.generated.json",
+  "compilerOptions": {
+    "composite": true,
+    "incremental": true,
+    "sourceMap": false,
+    "noEmit": false,
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "paths": {
+      "@qihongmu/dsh-plugins-token-tracing/remote": ["../host/lib/typert.remote-client.d.ts"],
+      "@qihongmu/dsh-plugins-token-tracing/types": ["../host/lib/types/types.d.ts"]
+    }
+  },
+  "include": ["src"]
+}

@@ -17,12 +17,12 @@
 #                     routes did not register — see SKILL.md "Known pitfall").
 #
 # Usage: scripts/verify-env.sh <subcommand> [args]
-# Env:   VERIFY_DIR (default /tmp/dsh-verify), DSH_REF (default dsh-v0.1.2-alpha.2),
+# Env:   VERIFY_DIR (default /tmp/dsh-verify), DSH_REF (default dsh-v0.1.2-rc.1),
 #        DSH_REPO (default sibling checkout)
 set -eu
 
 VERIFY_DIR=${VERIFY_DIR:-/tmp/dsh-verify}
-DSH_REF=${DSH_REF:-dsh-v0.1.2-alpha.2}
+DSH_REF=${DSH_REF:-dsh-v0.1.2-rc.1}
 DSH_REPO=${DSH_REPO:-"$(dirname "$PWD")/deepseek-harness"}
 REPO_ROOT=$PWD
 

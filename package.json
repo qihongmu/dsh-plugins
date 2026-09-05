@@ -20,6 +20,7 @@
     "verify": "node scripts/verify-remote.mjs",
     "test": "node scripts/test.mjs",
     "ci:local": "bash scripts/ci-local.sh",
-    "gen:typert": "node scripts/gen-typert.mjs"
+    "gen:typert": "node scripts/gen-typert.mjs",
+    "replay:diagnose": "node scripts/replay-diagnose.mjs"
   }
 }

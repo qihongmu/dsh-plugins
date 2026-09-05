@@ -1,0 +1,226 @@
+/* Token-tracing waterfall styles. */
+
+.wrap {
+  position: relative; /* containing block for the absolute hover tooltip + help panel */
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  /* No overflow here: a hidden axis would force the other to auto and turn the
+   * absolutely-positioned help panel into a scrollbar. Horizontal clipping is
+   * the parent .scroll's job; the svg self-limits with max-width: 100%. */
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11px;
+}
+
+.title {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.viewButton {
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.viewButtonActive {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+  border-color: color-mix(in srgb, currentColor 25%, transparent);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.legendDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.legendLabel {
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+}
+
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 15%, transparent));
+  background: var(--dsw-specific-menu, #2a2a2e);
+  box-shadow: var(--dsw-shadow-lv2, 0 4px 12px rgb(0 0 0 / 35%));
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.tooltipHead {
+  font-weight: 600;
+}
+
+.tooltipLine {
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 60%, transparent));
+}
+
+.helpButton {
+  font: inherit;
+  font-size: 10px;
+  width: 16px;
+  height: 16px;
+  line-height: 1;
+  border-radius: 999px;
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 20%, transparent));
+  background: transparent;
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 60%, transparent));
+  cursor: pointer;
+}
+
+.helpButtonActive {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+  color: inherit;
+}
+
+.helpPanel {
+  position: absolute;
+  z-index: 11;
+  right: 0;
+  top: 26px;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 15%, transparent));
+  background: var(--dsw-specific-menu, #2a2a2e);
+  box-shadow: var(--dsw-shadow-lv3, 0 8px 24px rgb(0 0 0 / 40%));
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.helpRow {
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 70%, transparent));
+}
+
+.helpKey {
+  font-weight: 600;
+  color: inherit;
+  margin-right: 6px;
+}
+
+.svg {
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 10%, transparent));
+  border-radius: 8px;
+  background: var(--dsw-specific-menu, color-mix(in srgb, currentColor 4%, transparent));
+  display: block;
+  max-width: 100%;
+}
+
+.row {
+  cursor: pointer;
+}
+
+.row:hover .promptBase,
+.row:hover .outputBase {
+  filter: brightness(1.1);
+}
+
+.rowSelected .promptBase,
+.rowSelected .outputBase {
+  stroke: var(--dsw-static-blue-450, #4d8ef7);
+  stroke-width: 1.5;
+}
+
+.rowInvalidated .promptBase {
+  stroke: rgb(251 146 60);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 2;
+}
+
+.labelText {
+  font-size: 10px;
+  fill: var(--dsw-alias-text-secondary, currentColor);
+  text-anchor: start;
+  dominant-baseline: middle;
+}
+
+.promptBase,
+.outputBase {
+  fill: color-mix(in srgb, currentColor 7%, transparent);
+}
+
+.bolt {
+  font-size: 12px;
+  fill: rgb(251 146 60);
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+/* FR-14: folded placeholder + collapse handle for oversized tool-result
+   segments. The placeholder is a translucent dashed block — the row's gap
+   to its right communicates the true token scale. */
+
+.foldHit {
+  cursor: pointer;
+}
+
+.foldHit:focus-visible {
+  outline: none;
+}
+
+.foldHit:focus-visible .foldPlaceholder,
+.foldHit:focus-visible .foldHandle {
+  stroke: var(--dsw-static-blue-450, #4d8ef7);
+  stroke-width: 2;
+}
+
+.foldPlaceholder {
+  opacity: 0.3;
+  stroke-dasharray: 3 2;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.foldHandle {
+  opacity: 0.95;
+}
+
+.foldGlyph {
+  font-size: 11px;
+  font-weight: 700;
+  fill: var(--dsw-alias-label-primary, currentColor);
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+.foldGlyphLight {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #ffffff;
+  dominant-baseline: middle;
+  pointer-events: none;
+}

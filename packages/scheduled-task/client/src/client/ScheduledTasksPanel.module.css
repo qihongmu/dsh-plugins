@@ -1,14 +1,27 @@
 /* Sidebar-foot scheduled-tasks trigger and the right-docked drawer it opens
    (已安排的任务 history list + 新建定时任务 form). */
 
+/* The slot renders every occupant into sidebar footerActions — ONE
+   non-wrapping flex row — so the vertical-menu look takes coordination:
+   each entry is a full-width band, and any occupant that is not the row's
+   first child shifts back to the column start (margin-left: -100%) and
+   down one band (57px = the 8px top gap + the 49px row above) to stack
+   under it. Solo install and either registration order both render as
+   stacked rows; a third footer occupant would overlap the second band
+   unless its own package carries the same rule. */
 .layer {
   position: relative;
   flex: none;
+  min-width: 0;
   display: flex;
   align-items: center;
   width: 100%;
   height: 49px;
   margin: 8px 0 0;
+}
+
+.layer:not(:first-child) {
+  margin: 57px 0 0 -100%;
 }
 
 .footerButtons {
@@ -64,9 +77,14 @@
 }
 
 .layer.rail {
+  flex: none;
   width: 36px;
   height: 36px;
   margin: 0;
+}
+
+.layer.rail:not(:first-child) {
+  margin: 36px 0 0 -36px;
 }
 
 .rail .badge {

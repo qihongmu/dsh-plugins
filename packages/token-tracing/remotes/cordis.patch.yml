@@ -1,0 +1,5 @@
+# @qihongmu/dsh-client-remotes-token-tracing: plugins-remotes-token-tracing — merged into the profile patch list by `dsh plugin` once
+# this package is added to dsh.profile.bundles.
+- insert:
+    - id: plugins-remotes-token-tracing
+      name: '@qihongmu/dsh-client-remotes-token-tracing'

@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: deepseek-ai/deepseek-harness
-          ref: dsh-v0.1.2-alpha.2
+          ref: dsh-v0.1.2-rc.1
           path: deepseek-harness
 
       # Read the pinned pnpm version from the UPSTREAM manifest — this repo has

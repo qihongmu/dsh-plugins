@@ -1,0 +1,836 @@
+/* M3 token dashboard: sidebar-footer trigger (scheduled-task badge pattern)
+   and the full-page surface it opens — a fixed inset-0 section at the
+   drawer's proven z-layer (backdrop 40 / drawer 41), covering all columns.
+   Theme via --dsw-* design tokens, same composition as M2. */
+
+/* ---- Sidebar footer trigger ---- */
+
+/* The slot renders every occupant into sidebar footerActions — ONE
+   non-wrapping flex row — so the vertical-menu look takes coordination:
+   each entry is a full-width band, and any occupant that is not the row's
+   first child shifts back to the column start (margin-left: -100%) and
+   down one band (57px = the 8px top gap + the 49px row above) to stack
+   under it. Solo install and either registration order both render as
+   stacked rows; a third footer occupant would overlap the second band
+   unless its own package carries the same rule. */
+.layer {
+  position: relative;
+  flex: none;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 49px;
+  margin: 8px 0 0;
+}
+
+.layer:not(:first-child) {
+  margin: 57px 0 0 -100%;
+}
+
+.footerButtons {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 49px;
+  padding: 0 8px 0 6px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--dsw-alias-label-primary);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.badge:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+}
+
+.badge[data-active] {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.badgeLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.layer.rail {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+}
+
+.layer.rail:not(:first-child) {
+  margin: 36px 0 0 -36px;
+}
+
+.rail .badge {
+  justify-content: center;
+  gap: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.rail .footerButtons {
+  flex-direction: column;
+}
+
+/* ---- Full-page surface ---- */
+
+.page {
+  position: fixed;
+  inset: 0;
+  z-index: 41; /* scheduled-task drawer layer; covers all columns */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--dsw-alias-bg-base);
+  color: var(--dsw-alias-label-primary);
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.chips {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chip {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 10px;
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.chip:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+}
+
+.chipActive {
+  background: var(--dsw-alias-interactive-bg-hover);
+  border-color: var(--dsw-static-blue-450, #4d8ef7);
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.iconButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.iconButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+}
+
+.scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+  flex: 1;
+  box-sizing: border-box;
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
+}
+
+/* ---- Shared bits ---- */
+
+.muted {
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+  font-size: 13px;
+}
+
+.stateBox {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 24px 16px;
+}
+
+.emptyTitle {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.errorText {
+  color: var(--dsw-static-red-400, #f87171);
+  font-size: 13px;
+}
+
+.retryButton {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 12px;
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.badgeExact {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.badgeEstimated {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--dsw-static-neutral-bluish-400, #8ea9c9) 22%, transparent);
+}
+
+.deltaGood {
+  color: var(--dsw-static-green-450, #34c77b);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.deltaBad {
+  color: var(--dsw-static-red-400, #f87171);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.deltaFlat {
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+  font-size: 11px;
+}
+
+/* Each dashboard module renders as a card — same surface recipe as the stat
+   cells — so adjacent sections read as separate blocks on the flat page
+   background instead of one continuous column of text. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--dsw-specific-menu, color-mix(in srgb, currentColor 6%, transparent));
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+}
+
+.sectionTitleRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+}
+
+.sectionNote {
+  font-size: 11px;
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 45%, transparent));
+}
+
+/* ---- Summary strip ---- */
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 8px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--dsw-specific-menu, color-mix(in srgb, currentColor 6%, transparent));
+}
+
+.statValue {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+}
+
+/* ---- Daily bars ---- */
+
+.barsWrap {
+  position: relative;
+  min-width: 0;
+}
+
+.barsSvg {
+  display: block;
+  width: 100%;
+  height: 120px;
+}
+
+.emptyCol {
+  fill: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.colSelected {
+  fill: transparent;
+  stroke: var(--dsw-static-blue-450, #4d8ef7);
+  stroke-width: 1.5;
+}
+
+.colLocated {
+  fill: transparent;
+  stroke: var(--dsw-static-orange-400, rgb(251 146 60));
+  stroke-width: 1.5;
+  stroke-dasharray: 3 2;
+}
+
+.barsWrap svg rect[fill='transparent'] {
+  cursor: pointer;
+}
+
+.axis {
+  display: flex;
+  margin-top: 2px;
+}
+
+.axisLabel {
+  flex: 1;
+  font-size: 10px;
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 45%, transparent));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.tooltip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--dsw-specific-menu, var(--dsw-alias-bg-base));
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  box-shadow: var(--dsw-shadow-lv1, 0 2px 8px rgb(0 0 0 / 20%));
+  font-size: 11px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.tooltipHead {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.tooltipLine {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Instant anchored hover tips ----
+   Same box look as .tooltip, but shown on :hover with no dwell — the native
+   title attribute takes ~1s and renders unstyled, which read as "broken". */
+
+.tipAnchor {
+  position: relative;
+}
+
+.tip {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--dsw-specific-menu, var(--dsw-alias-bg-base));
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  box-shadow: var(--dsw-shadow-lv1, 0 2px 8px rgb(0 0 0 / 20%));
+  font-size: 11px;
+  pointer-events: none;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.tipAnchor:hover > .tip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tipRight {
+  left: auto;
+  right: 0;
+}
+
+.tipWide {
+  white-space: normal;
+  width: max-content;
+  max-width: 280px;
+}
+
+/* ---- Daily-bar day filter feedback ---- */
+
+.filterRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.filterNote {
+  font-size: 12px;
+  color: var(--dsw-static-blue-450, #4d8ef7);
+}
+
+.filterButton {
+  font: inherit;
+  font-size: 11px;
+  padding: 1px 10px;
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.filterButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+}
+
+/* ---- Two-column band ---- */
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- Component share rows ---- */
+
+.shareList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.shareRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.rowLocated {
+  background: color-mix(in srgb, var(--dsw-static-orange-400, rgb(251 146 60)) 14%, transparent);
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.shareLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shareTokens {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.shareRatio {
+  min-width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+}
+
+.spark {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sparkLabel {
+  flex: none;
+  font-size: 11px;
+  cursor: help;
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+}
+
+.sparkLatest {
+  flex: none;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+}
+
+/* Relative track so the per-day hover tip can anchor under the polyline. */
+.sparkTrack {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+}
+
+.sparkSvg {
+  flex: 1;
+  height: 30px;
+}
+
+.sparkTip {
+  position: absolute;
+  top: calc(100% + 2px);
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: var(--dsw-specific-menu, var(--dsw-alias-bg-base));
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  box-shadow: var(--dsw-shadow-lv1, 0 2px 8px rgb(0 0 0 / 20%));
+  font-size: 11px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.sparkLine {
+  fill: none;
+  stroke: var(--dsw-static-neutral-bluish-400, #8ea9c9);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ---- Tables ---- */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.th {
+  padding: 4px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+  border-bottom: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+}
+
+.td {
+  padding: 5px 8px;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 6%, transparent);
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Suggestions ---- */
+
+.suggestNone {
+  font-size: 13px;
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+}
+
+.suggestList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.suggestRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.sevDot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 4px;
+  border-radius: 50%;
+}
+
+.sevHigh {
+  background: var(--dsw-static-red-400, #f87171);
+}
+
+.sevMedium {
+  background: var(--dsw-static-orange-400, rgb(251 146 60));
+}
+
+.sevInfo {
+  background: var(--dsw-static-blue-450, #4d8ef7);
+}
+
+.suggestBody {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.suggestTitle {
+  font-weight: 600;
+}
+
+.suggestDetail {
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+}
+
+.evidenceButton {
+  flex: none;
+  align-self: center;
+  font: inherit;
+  font-size: 11px;
+  padding: 2px 8px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--dsw-static-blue-450, #4d8ef7);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.evidenceButton:hover {
+  text-decoration: underline;
+}
+
+/* ---- Session list ---- */
+
+.sessionList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sessionBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sessionRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 7px 10px;
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.sessionRowOpen {
+  border-color: var(--dsw-static-blue-450, #4d8ef7);
+}
+
+.sessionId {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.sessionMeta {
+  color: var(--dsw-alias-text-secondary, color-mix(in srgb, currentColor 55%, transparent));
+  font-variant-numeric: tabular-nums;
+}
+
+.sessionStat {
+  font-variant-numeric: tabular-nums;
+}
+
+.sessionDetail {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 8px 10px 8px 20px;
+  font-size: 12px;
+}
+
+.miniBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 44px;
+  padding: 2px;
+}
+
+.miniBar {
+  display: block; /* wrapped in .tipAnchor — flex item blockification no longer applies */
+  width: 6px;
+  border-radius: 2px 2px 0 0;
+  background: var(--dsw-static-blue-450, #4d8ef7);
+  opacity: 0.75;
+}
+
+.openButton {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px 12px;
+  border: 1px solid var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  border-radius: 8px;
+  background: transparent;
+  color: var(--dsw-static-blue-450, #4d8ef7);
+  cursor: pointer;
+}
+
+.openButton:hover {
+  background: var(--dsw-alias-interactive-bg-hover-solid);
+}
+
+/* ---- FR-13 oversized-result scan ---- */
+
+.scanBox {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px dashed var(--dsw-alias-border-subtle, color-mix(in srgb, currentColor 12%, transparent));
+  border-radius: 8px;
+}
+
+.scanHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.scanTitle {
+  font-weight: 600;
+}
+
+.scanList {
+  display: flex;
+  flex-direction: column;
+}
+
+.scanRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 3px 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 6%, transparent);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.scanRow:last-child {
+  border-bottom: none;
+}
+
+.scanTool {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scanTokens {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}

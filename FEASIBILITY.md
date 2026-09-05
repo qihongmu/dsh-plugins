@@ -90,6 +90,22 @@ in-repo world uses the `dsh-api-remotes` assembly; an external plugin provides i
 in-repo consumer pattern (`dsh-client-ui-settings-plugin-inventory` declares
 `remote.pluginInventory` the same way).
 
+## Sidebar footer-action slot: occupants share one non-wrapping row
+
+`sidebar.footer.action` is a `list` slot, but `client-ui-sidebar` renders all
+occupants inside one `display: flex` row (`.footerActions`) with no wrap and
+no gap — the harness geometry is "beside", not a vertical menu, and the slot
+renderer projects entries bare (Fragment + `display: contents` anchors), so
+each plugin's root element is a direct flex child. Both repo plugins exploit
+that with a pure-CSS stacked-band pattern: the row's first occupant is a
+plain `width: 100%` row; any later occupant shifts back to the column start
+(`margin-left: -100%`) and down one band (`margin-top: 57px` wide / `36px`
+rail) via `:not(:first-child)`. Solo installs and either registration order
+render as stacked full-width menu rows; collapsed-rail icons stack the same
+way. Limitations: it assumes the harness keeps `.footerActions` a single
+nowrap row; a third footer occupant would overlap the second band unless its
+own package carries the same rule (a dsh-side layout would be the real fix).
+
 ## Verification
 
 Headless-browser boot against an isolated `dsh web` instance (temporary `$DSH_HOME` under `/tmp`,

@@ -1,0 +1,60 @@
+{
+  "name": "@qihongmu/dsh-client-remotes-token-tracing",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": "Qihong <qihong.m.u+dev@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/qihongmu/dsh-plugins.git",
+    "directory": "packages/token-tracing/remotes"
+  },
+  "description": "External user plugin: browser assembly that mounts the vendored tokenTracing Remote contribution (including the follow stream) before the token-tracing UI entry activates.",
+  "type": "module",
+  "main": "lib/types/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/types/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/types/invariant.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-api-gateway"
+      ],
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "*",
+    "@deepseek-ai/dsh-api-gateway": "*",
+    "@deepseek-ai/dsh-api-remotes": "*",
+    "@deepseek-ai/dsh-typert-protocol": "*",
+    "@qihongmu/dsh-plugins-token-tracing": "*"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "!lib/**/*.map",
+    "!lib/**/*.tsbuildinfo"
+  ]
+}

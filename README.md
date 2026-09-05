@@ -16,10 +16,11 @@ Requires Node.js ≥ 22 and pnpm. **Plugin ↔ dsh version mapping** — check y
 
 | Plugin version | Compatible dsh | dsh install |
 | -------------- | -------------- | ----------- |
+| dev (unreleased, incl. token-tracing M3) | `dsh-v0.1.2-rc.1` (gates + real-data browser acceptance green) | source checkout at tag `dsh-v0.1.2-rc.1` |
 | **0.1.1-alpha.2** | `dsh-v0.1.2-alpha.2` (the 0.1.2-alpha line; only alpha.2 is verified) | `npm i -g @deepseek-ai/dsh@0.1.2-alpha.2` — the alpha line is **not** npm `latest`, pin it explicitly |
 | **0.1.0** | dsh ≤ `0.1.1-rc.2` (verified on `dsh-v0.1.1-rc.2`) | `npm i -g @deepseek-ai/dsh` (`latest` dist-tag) |
 
-Running dsh from a source checkout? Match the checkout tag to the table above — plugin `0.1.0` fails to boot on the 0.1.2-alpha line (upstream removed `dsh-client-runtime` / `ConnectionHandle.api`), and plugin `0.1.1-alpha.2` is required from `dsh-v0.1.2-alpha.1` on.
+Running dsh from a source checkout? Match the checkout tag to the table above — plugin `0.1.0` fails to boot on the 0.1.2-alpha line (upstream removed `dsh-client-runtime` / `ConnectionHandle.api`), and plugin `0.1.1-alpha.2` is required from `dsh-v0.1.2-alpha.1` on. The dev tree re-certified against `dsh-v0.1.2-rc.1` on 2026-09-01: every plugin-facing package (ui-slots / ui-sidebar / ui-conversation / ui-primitives / locale / api-remotes / session-controller / core-session / storage-domain) is source-identical from alpha.4 to rc.1, and rc.1's storage changes are additive-only (`DomainSpec.compatibleVersions` / `invalidRecords`, both optional with the old loud path as default).
 
 ```sh
 dsh plugin --profile web add @qihongmu/dsh-plugins-scheduled-task-bundle

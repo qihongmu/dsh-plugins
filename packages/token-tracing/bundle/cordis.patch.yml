@@ -1,0 +1,15 @@
+# Aggregate mount: one `dsh plugin --profile <name> add @qihongmu/dsh-plugins-token-tracing-bundle`
+# installs the three halves as dependencies and inserts their three entries here.
+# Each row disables itself when the same package is already mounted under a
+# different entry id (e.g. a sub-package installed individually before the
+# bundle), preventing a duplicate mount.
+- insert:
+    - id: plugins-token-tracing
+      name: '@qihongmu/dsh-plugins-token-tracing'
+      disabled: !!js "[...ctx.loader.entries()].some((e) => e.options.name === '@qihongmu/dsh-plugins-token-tracing' && e.options.id !== 'plugins-token-tracing' && !e.disabled)"
+    - id: plugins-remotes-token-tracing
+      name: '@qihongmu/dsh-client-remotes-token-tracing'
+      disabled: !!js "[...ctx.loader.entries()].some((e) => e.options.name === '@qihongmu/dsh-client-remotes-token-tracing' && e.options.id !== 'plugins-remotes-token-tracing' && !e.disabled)"
+    - id: plugins-ui-token-tracing
+      name: '@qihongmu/dsh-client-ui-token-tracing'
+      disabled: !!js "[...ctx.loader.entries()].some((e) => e.options.name === '@qihongmu/dsh-client-ui-token-tracing' && e.options.id !== 'plugins-ui-token-tracing' && !e.disabled)"

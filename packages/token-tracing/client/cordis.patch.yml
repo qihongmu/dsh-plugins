@@ -1,0 +1,5 @@
+# @qihongmu/dsh-client-ui-token-tracing: plugins-ui-token-tracing — merged into the profile patch list by `dsh plugin` once
+# this package is added to dsh.profile.bundles.
+- insert:
+    - id: plugins-ui-token-tracing
+      name: '@qihongmu/dsh-client-ui-token-tracing'
