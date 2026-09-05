@@ -91,6 +91,19 @@ sync with `host/src/types.ts`.
   changes do NOT propagate to a real-environment profile — its
   `cordis.patch.yml` rows and `node_modules` keep the old names and boot
   fails with `ERR_MODULE_NOT_FOUND`; fix the profile rows and re-link.
+- **Real profile, two mounting sources.** The launcher applies every
+  `dsh.profile.bundles` package's own `dsh.bundle.patch`, then the profile's
+  `cordis.patch.yml`: when a half joins the bundles list, its same-id
+  hand-written row in the profile patch must go, or the next boot crashes
+  with "duplicate loader entry id". The drift is silent (the two states age
+  independently); diagnose and fix through the verify-release skill's
+  [references/real-environment.md](../verify-release/references/real-environment.md)
+  sandbox recipe — read-only.
+- **Durable layout changes need a migration rehearsal.** After changing a
+  host half's storage spec layout, boot the sandbox clone of the real profile
+  with a COPY of the real storages before restarting the real environment;
+  verify record count, an aggregate total, and that the legacy store file
+  stays byte-identical.
 
 ## 2. Test & local CI gates
 
@@ -109,6 +122,13 @@ the temp copy starts empty and reproduces a clean runner. It needs a **built**
 
 What CI runs on GitHub = the same gates: bootstrap → build → test → verify,
 with the harness cloned at the pinned ref.
+
+Fixture fidelity matters as much as coverage: engines over stored maps
+(attribution, ranking, suggestion rules) must be tested with fixtures whose
+key shapes match production storage — dump a real record and copy its key
+conventions. Hand-written family keys over leaf-shaped data (`kind/name`
+composites) pass every test while never firing on real data; lock both shapes
+with a mixed-key case.
 
 ## 3. Verification — hand off to the verify-release skill
 

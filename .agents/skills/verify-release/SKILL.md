@@ -22,10 +22,12 @@ Two paths share one build. Pick based on what the user wants proven:
   `dsh plugin --profile web add @qihongmu/dsh-plugins-scheduled-task-bundle`.
   Use before actually publishing.
 
-Both paths MUST run inside an isolated `$DSH_HOME` and MUST NOT touch `~/.dsh`.
-Prove isolation: before starting, snapshot with
+Both install paths MUST run inside an isolated `$DSH_HOME` and MUST NOT touch
+`~/.dsh`. Prove isolation: before starting, snapshot with
 `find ~/.dsh -maxdepth 3 -name node_modules -prune -o -print | sort > /tmp/dsh-verify/home-before.txt`,
-and after cleanup `diff` it against a fresh snapshot — zero changes is a report item.
+and after cleanup `diff` it against a fresh snapshot — zero changes is a report
+item. Path C below also keeps `~/.dsh` read-only, by working against the
+already-running real environment without installing anything.
 
 ## 0. Version alignment (do this first)
 
@@ -123,7 +125,24 @@ scripts/verify-env.sh probe 3199
 
 Then run the browser checklist below.
 
-## 4. Browser checklist
+## 4. Path C — real-environment acceptance (read-only)
+
+For iterative acceptance of client-side changes and for real-data
+verification, an isolated install proves little that the user's
+already-mounted real profile doesn't prove better. Drive the running real
+`dsh web` directly and keep `~/.dsh` strictly read-only:
+
+- Authenticate with a session cookie minted from the persisted
+  browser-session credential (boot tokens live only in the booting process).
+- Reproduce real-profile boot failures and rehearse durable-store migrations
+  in a sandbox clone of the real profile.
+
+Both recipes (cookie minting, sandbox clone) live in
+[references/real-environment.md](references/real-environment.md). Path B
+remains the release gate; any write to `~/.dsh` needs the user's explicit
+confirmation even in service of Path C.
+
+## 5. Browser checklist
 
 Drive the UI with the browser-use skill (main agent). DSH first boot shows an
 "Internal Testing Notice" (Continue) and an API-key onboarding ("Configure
@@ -143,7 +162,7 @@ failure path. Then verify at minimum:
 7. Save screenshots per test point (numbered, e.g. `/tmp/dsh-verify/shots/t1_*.png`)
    and view them; every pass/fail claim needs a viewed screenshot.
 
-## 5. Known pitfalls
+## 6. Known pitfalls
 
 - **Half-by-half `dsh plugin add` is broken on dsh 0.1.1-rc.2**: installing the
   three halves via `dsh plugin add ./host ./remotes ./client` (or from tarballs)
@@ -152,18 +171,34 @@ failure path. Then verify at minimum:
   the drawer shows HTTP 404. The aggregate bundle works. Source installs must
   follow Path A (plain deps + profile patch rows). Details in
   [references/troubleshooting.md](references/troubleshooting.md).
-- Do not ALSO hand-write the three rows when the halves are bundle-registered —
-  duplicate `insert` ids crash boot ("duplicate loader entry id").
+- Bundle registration and hand-written rows are two sources of the same entry
+  ids: the launcher applies every `dsh.profile.bundles` package's own
+  `dsh.bundle.patch` first, then the profile's `cordis.patch.yml` — a same-id
+  row in both crashes boot ("duplicate loader entry id"). The drift is silent
+  because the two states evolve independently: audit the profile patch
+  whenever a half joins the bundles list (a profile `package.json` mtime
+  newer than the last successful boot is the tell), and keep the patch file a
+  top-level YAML array (comments alone error out). When both sources carry
+  identical rows, empty the hand-written ones so the bundles list is the
+  single source.
 - Installing the published CLI OOMs npm's default heap; the `cli` subcommand
   already sets `NODE_OPTIONS=--max-old-space-size=8192`.
 - `npm publish <path>` needs the `./` prefix or npm treats the path as a git spec.
 - In the DSH web UI, Playwright locator `.click()` hangs; use coordinate clicks
   (`tab.cua.click`) for buttons and locator `fill`/`selectOption` for inputs.
+  In background tabs, `cua`/`dom_cua` mouse clicks additionally double-fire on
+  toggle buttons (a surface opens and instantly closes — reads as a dead
+  click): dispatch toggles with a single synchronous `element.click()` via
+  `evaluate`, and confirm state with a snapshot — an `aria-expanded` read
+  right after the click can still be React-batch stale.
+- The in-app browser's screenshot pipeline wedges after 1–2 captures per tab
+  ("A previous screenshot ... still completing"). Plan one decisive capture
+  per tab and recover by opening a fresh tab.
   See [references/troubleshooting.md](references/troubleshooting.md).
 - `~/.dsh` is the user's real environment. Never set `DSH_HOME` to it, never
   mount it, and end the report with the before/after snapshot diff.
 
-## 6. Cleanup
+## 7. Cleanup
 
 ```sh
 lsof -ti:3199 | xargs kill                       # any port you booted
@@ -176,7 +211,7 @@ DSH_ROOT=<sibling-or-none> npm run bootstrap      # restore repo links to the de
 Keep `dist/` and the screenshots until the user has read the report. Re-run the
 `~/.dsh` snapshot diff and include the result in the report.
 
-## 7. Report
+## 8. Report
 
 Report per phase: build gates (test/verify counts), install mode, probe output,
 a checklist table with screenshot paths for each item, pitfalls hit, and the
