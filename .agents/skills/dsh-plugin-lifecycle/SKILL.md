@@ -17,8 +17,9 @@ description: >
 
 This is an npm-scripts workspace (no root dependencies) of **external user
 plugins** for DeepSeek Harness (dsh). Each plugin lives at
-`packages/<plugin>/{host,client,remotes,bundle}`; scheduled-task, the
-current plugin, ships as **four npm packages** under the `@qihongmu` scope:
+`packages/<plugin>/{host,client,remotes,bundle}` and ships as **four npm
+packages** under the `@qihongmu` scope (the table shows scheduled-task's
+names as the example):
 
 | half | package | role |
 |---|---|---|
@@ -91,6 +92,14 @@ sync with `host/src/types.ts`.
   changes do NOT propagate to a real-environment profile — its
   `cordis.patch.yml` rows and `node_modules` keep the old names and boot
   fails with `ERR_MODULE_NOT_FOUND`; fix the profile rows and re-link.
+- **The plugin README pair is part of delivery:** ship `README.md` +
+  `README.zh-CN.md` (cross-linked; an existing plugin's pair is the
+  template) and add the plugin to both root READMEs — a plugins-table row
+  plus an install entry whose wording switches from the source-checkout
+  form to the one-command bundle install once the npm release lands.
+  Screenshots that ship inside the repo must redact private data first
+  (session titles, paths, usernames — blur via injected CSS) and be viewed
+  before saving.
 - **Real profile, two mounting sources.** The launcher applies every
   `dsh.profile.bundles` package's own `dsh.bundle.patch`, then the profile's
   `cordis.patch.yml`: when a half joins the bundles list, its same-id
