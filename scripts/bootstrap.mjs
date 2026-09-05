@@ -28,6 +28,8 @@ import { dshPath, repoRoot, resolveDshRoot } from './lib/dsh-root.mjs'
 const SCOPED_PACKAGES = [
   'cordis',
   'dsh-agent',
+  'dsh-agent-default-model',
+  'dsh-agent-presets',
   'dsh-api-gateway',
   'dsh-api-remotes',
   'dsh-api-session-controller',
