@@ -9,6 +9,7 @@ External plugins for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-
 | Plugin | What it does | Guide |
 | ------ | ------------ | ----- |
 | **Scheduled Tasks** | Run a task on a schedule — hourly / daily / weekly / monthly wall-clock presets, one-shot delays, per-task project and model | [packages/scheduled-task/README.md](packages/scheduled-task/README.md) |
+| **Token Tracing** | Token attribution — where the tokens went in every conversation (per-turn waterfall, cross-session dashboard, optimization hints) | [packages/token-tracing/README.md](packages/token-tracing/README.md) |
 
 ## Install
 
@@ -27,6 +28,12 @@ dsh plugin --profile web add @qihongmu/dsh-plugins-scheduled-task-bundle
 ```
 
 One command pulls the three halves (host service, remotes assembly, browser UI) and registers them in the web profile. Restart `dsh web`, then open the plugin's guide (linked above) to start using it.
+
+**Token Tracing** is not on npm yet — from a built source checkout of this repository (see [CONTRIBUTING.md](CONTRIBUTING.md)), install its three halves directly and restart `dsh web`:
+
+```sh
+dsh plugin --profile web add ./packages/token-tracing/host ./packages/token-tracing/remotes ./packages/token-tracing/client
+```
 
 > Install the **bundle or the individual halves — not both**. The three-command form (`dsh plugin --profile web add ./packages/scheduled-task/host ./packages/scheduled-task/remotes ./packages/scheduled-task/client`) only applies to a source checkout, and needs fine-grained control.
 
