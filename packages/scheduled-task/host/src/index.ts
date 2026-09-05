@@ -7,7 +7,10 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { Service } from '@deepseek-ai/cordis'
 import type { Context } from '@deepseek-ai/cordis'
-import type { Agent, AgentHandle } from '@deepseek-ai/dsh-agent'
+import { installModelSelection } from '@deepseek-ai/dsh-agent'
+import type { Agent, AgentHandle, AgentSetup, ModelSelection, ModelSelectionRef } from '@deepseek-ai/dsh-agent'
+import type { AgentDefaultModelConfig } from '@deepseek-ai/dsh-agent-default-model'
+import type { AgentPresets } from '@deepseek-ai/dsh-agent-presets'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type { SessionTitleService } from '@deepseek-ai/dsh-session-title'
@@ -106,6 +109,17 @@ function isMissingSessionError(error: unknown): boolean {
 }
 
 /**
+ * Whether two model selections name the same route; `undefined` on both sides
+ * counts as equal (no selection bound).
+ */
+function selectionEquals(left: ModelSelection | undefined, right: ModelSelection | undefined): boolean {
+  if (left === undefined || right === undefined) return left === right
+  return left.provider === right.provider
+    && left.model === right.model
+    && left.reasoningEffort === right.reasoningEffort
+}
+
+/**
  * Deterministic run-session identity for one task+project pair. Deriving the id
  * from the cwd makes a project edit migrate the task to a FRESH conversation in
  * the new workspace (workspace listings index sessions by their header's
@@ -146,6 +160,10 @@ export class ScheduledTaskService extends TypertRemoteService {
   private table?: KvTable<ScheduledTaskIdType, ScheduledTaskRecord>
   private timer: ReturnType<typeof setTimeout> | undefined
   private readonly handles = new Map<ScheduledTaskIdType, AgentHandle>()
+  /** The composition each retained handle carries: its mutable model
+   *  selection (edits reach the live agent through this ref) and the preset
+   *  id mounted at compose time (a changed default forces recomposition). */
+  private readonly compositions = new Map<ScheduledTaskIdType, { selectionRef: ModelSelectionRef; presetId?: string }>()
   /** Last task title pinned onto each run session (avoids re-rename spam). */
   private readonly appliedTitles = new Map<SessionId, string>()
   /** Run sessions already attached to their bound workspace (avoids re-attach churn). */
@@ -274,6 +292,7 @@ export class ScheduledTaskService extends TypertRemoteService {
           this.handles.delete(id)
           await handle.dispose()
         }
+        this.compositions.delete(id)
         this.failures.delete(id)
         this.rearm()
       }
@@ -434,26 +453,86 @@ export class ScheduledTaskService extends TypertRemoteService {
   }
 
   /**
+   * Resolve the model selection for one run: the task's stored model when it
+   * names one, else the deployment's current default. Returns `undefined` when
+   * neither exists (legacy shape: the request waterfall picks a model).
+   */
+  private runSelection(record: ScheduledTaskRecord): ModelSelection | undefined {
+    if (record.model !== undefined) return { provider: record.model.provider, model: record.model.model }
+    const defaults: AgentDefaultModelConfig | undefined = this.ctx.get('agentDefaultModel')
+    return defaults?.currentSelection()
+  }
+
+  /**
+   * Resolve the default agent preset for one run. Its standing mount is what
+   * makes the standard toolset visible — an agent composed without it gets a
+   * bare scope with ZERO tools and answers in one text-only step (the "task
+   * finishes in seconds" failure). Returns `undefined` when the deployment
+   * provides no preset roster at all; a present-but-broken roster throws so
+   * the fire records the reason instead of silently running tool-less.
+   */
+  private async composeRun(): Promise<{
+    presetId: string
+    mountPreset: (agentCtx: Context) => Promise<void>
+  } | undefined> {
+    const presets: AgentPresets | undefined = this.ctx.get('agentPresets')
+    if (presets === undefined) return undefined
+    const preset = await presets.resolve(undefined)
+    return {
+      presetId: preset.id,
+      mountPreset: async (agentCtx: Context) => {
+        await presets.mount(agentCtx, preset.id)
+      },
+    }
+  }
+
+  /**
    * Resolve the live run Agent for a task's CURRENT project. The durable
    * session identity is derived from the task id + cwd (`runSessionIdOf`), so
    * an edited project transparently starts a fresh conversation inside the new
    * workspace while returning to an earlier project resumes that project's
    * existing history. Returns the possibly-new sessionId for persistence.
+   *
+   * The agent is composed like a host-owned conversation: the default preset's
+   * toolset plus the bound model selection (the preset's prompt assembly reads
+   * `{{model}}` from it). Edits are picked up on the next fire: a model change
+   * reaches the live agent IN PLACE through the installed selection ref, a
+   * preset or project change recomposes via dispose + resume.
    */
   private async ensureAgent(record: ScheduledTaskRecord): Promise<{ agent: Agent; sessionId: SessionId }> {
     const desiredCwd = record.cwd ?? process.cwd()
     const targetId = runSessionIdOf(record.id, desiredCwd)
-    const agentOptions = record.model === undefined
+    const selection = this.runSelection(record)
+    const agentOptions = selection === undefined
       ? undefined
-      : { provider: record.model.provider, model: record.model.model }
+      : { provider: selection.provider, model: selection.model }
+    const selectionRef: ModelSelectionRef = { current: selection, assembled: undefined }
+    const composition = await this.composeRun()
+    const presetMeta = composition === undefined ? {} : { agentPreset: composition.presetId }
+    const setup: AgentSetup | undefined = selection === undefined && composition === undefined
+      ? undefined
+      : async (agentCtx: Context) => {
+        if (selection !== undefined) installModelSelection(agentCtx, selectionRef)
+        if (composition !== undefined) await composition.mountPreset(agentCtx)
+      }
+    const setupOption = setup === undefined ? {} : { setup }
 
-    // A retained run handle is reused only when it still matches the target.
+    // A retained run handle is reused only when it still matches the target
+    // AND carries the composition it was composed with.
     const retained = this.handles.get(record.id)
     if (retained !== undefined) {
-      if (retained.agent.session.id === targetId && retained.agent.session.header.cwd === desiredCwd) {
+      const carried = this.compositions.get(record.id)
+      if (retained.agent.session.id === targetId
+        && retained.agent.session.header.cwd === desiredCwd
+        && carried !== undefined
+        && carried.presetId === composition?.presetId) {
+        if (!selectionEquals(carried.selectionRef.current, selection)) {
+          carried.selectionRef.current = selection
+        }
         return { agent: retained.agent, sessionId: targetId }
       }
       this.handles.delete(record.id)
+      this.compositions.delete(record.id)
       await retained.dispose()
     }
 
@@ -462,17 +541,23 @@ export class ScheduledTaskService extends TypertRemoteService {
       handle = await this.ctx.agents.resume({
         resumeSessionId: targetId,
         ...agentOptions === undefined ? {} : { agentOptions },
+        ...setupOption,
       })
     } catch (resumeError: unknown) {
       if (!isMissingSessionError(resumeError)) throw resumeError
       // Not persisted yet (first run for this task+project pair): create it in-project.
       handle = await this.ctx.agents.create({
         sessionId: targetId,
-        meta: { cwd: desiredCwd },
+        meta: { cwd: desiredCwd, ...presetMeta },
         ...agentOptions === undefined ? {} : { agentOptions },
+        ...setupOption,
       })
     }
     this.handles.set(record.id, handle)
+    this.compositions.set(record.id, {
+      selectionRef,
+      ...composition === undefined ? {} : { presetId: composition.presetId },
+    })
     return { agent: handle.agent, sessionId: targetId }
   }
 
@@ -485,6 +570,7 @@ export class ScheduledTaskService extends TypertRemoteService {
     }
     const handles = [...this.handles.values()]
     this.handles.clear()
+    this.compositions.clear()
     await Promise.allSettled(handles.map(handle => handle.dispose()))
   }
 }

@@ -46,11 +46,17 @@ type Kv = {
 function makeService(table: ReturnType<typeof makeTable>, overrides: {
   agents?: Record<string, (options: never) => unknown>
   logger?: { warnings: string[] }
+  agentPresets?: {
+    resolve: (id?: string) => Promise<{ id: string }>
+    mount: (agentCtx: unknown, id: string) => Promise<void>
+  }
+  agentDefaultModel?: { currentSelection: () => { provider: string; model: string } }
 } = {}) {
   const warnings: string[] = []
   const svc = Object.create(ScheduledTaskService.prototype) as Record<string, unknown> & ScheduledTaskService
   svc['table'] = table
   svc['handles'] = new Map()
+  svc['compositions'] = new Map()
   svc['failures'] = new Map()
   svc['appliedTitles'] = new Map()
   svc['attachedSessions'] = new Set()
@@ -60,6 +66,9 @@ function makeService(table: ReturnType<typeof makeTable>, overrides: {
     sessions: { flush: async () => {} },
     sessionTitle: { rename: () => {} },
     workspaceRegistry: { get: () => undefined },
+    get: (name: string) => (name === 'agentPresets'
+      ? overrides.agentPresets
+      : name === 'agentDefaultModel' ? overrides.agentDefaultModel : undefined),
     agents: {
       resume: async () => { throw new Error('session "x" not found') },
       create: async ({ sessionId }: { sessionId: string }) => ({
@@ -220,6 +229,240 @@ describe('fireOne success path', () => {
     assert.equal(Date.parse(stored.rule.scheduledAt) > NOW, true, 'daily rule advanced past NOW')
     assert.equal((raw['failures'] as Map<unknown, unknown>).size, 0)
     assert.equal(flushed, 1)
+  })
+})
+
+describe('fireOne preset composition', () => {
+  const fire = (svc: ScheduledTaskService, due: ScheduledTaskRecord) =>
+    (svc as unknown as { fireOne(id: ScheduledTaskId, r: ScheduledTaskRecord, now: number): Promise<void> })
+      .fireOne(due.id, due, NOW)
+
+  const dueTask = () => {
+    const due = taskRecord({
+      cwd: '/opt/demo-workspace',
+      rule: buildRule({ daily: { time: '04:00', time_zone: 'UTC' } }, NOW)!,
+    })
+    due.rule = { ...due.rule, scheduledAt: new Date(NOW - 1).toISOString() }
+    return due
+  }
+
+  const demoPresets = (mounts: Array<[unknown, string]> = [], id: { value: string } = { value: 'demo-preset' }) => ({
+    resolve: async () => ({ id: id.value }),
+    mount: async (agentCtx: unknown, presetId: string) => { mounts.push([agentCtx, presetId]) },
+  })
+  const demoDefaults = (selection: { provider: string; model: string } = { provider: 'demo', model: 'demo-model' }) => ({
+    currentSelection: () => selection,
+  })
+  /** A setup target stub: installModelSelection registers listeners via `.on`. */
+  const setupCtx = () => ({ on: () => () => {} })
+  const handleFor = (sessionId: string, cwd = '/opt/demo-workspace') => ({
+    agent: {
+      session: { id: sessionId, header: { cwd }, append: () => {} },
+      followup: () => {},
+    },
+    dispose: async () => {},
+  })
+
+  it('composes the run agent with the default preset and default model selection on create', async () => {
+    const due = dueTask()
+    const table = makeTable([[due.id, due]])
+    const mounts: Array<[unknown, string]> = []
+    const created: Array<Record<string, unknown>> = []
+    const { svc } = makeService(table, {
+      agentPresets: demoPresets(mounts),
+      agentDefaultModel: demoDefaults(),
+      agents: {
+        resume: async () => { throw new Error('session not found') },
+        create: async (options: never) => {
+          created.push(options as Record<string, unknown>)
+          return handleFor((options as { sessionId: string }).sessionId)
+        },
+      },
+    } as never)
+
+    // First fire: no persisted session yet → create carries the composition.
+    await fire(svc, due)
+    assert.equal(created.length, 1)
+    assert.equal((created[0]!.meta as { agentPreset?: string }).agentPreset, 'demo-preset')
+    assert.deepEqual(created[0]!.agentOptions, { provider: 'demo', model: 'demo-model' })
+    assert.equal(typeof created[0]!.setup, 'function')
+    const agentCtx = setupCtx()
+    await (created[0]!.setup as (ctx: unknown) => Promise<void>)(agentCtx)
+    assert.deepEqual(mounts, [[agentCtx, 'demo-preset']])
+
+    // Second fire reuses the retained handle — no further create/resume.
+    await fire(svc, due)
+    assert.equal(created.length, 1)
+  })
+
+  it('prefers the task stored model over the deployment default', async () => {
+    const due = dueTask()
+    due.model = { provider: 'custom', model: 'custom-model' }
+    const table = makeTable([[due.id, due]])
+    const created: Array<Record<string, unknown>> = []
+    const { svc } = makeService(table, {
+      agentDefaultModel: demoDefaults(),
+      agents: {
+        resume: async () => { throw new Error('session not found') },
+        create: async (options: never) => {
+          created.push(options as Record<string, unknown>)
+          return handleFor((options as { sessionId: string }).sessionId)
+        },
+      },
+    } as never)
+
+    await fire(svc, due)
+
+    assert.deepEqual(created[0]!.agentOptions, { provider: 'custom', model: 'custom-model' })
+  })
+
+  it('passes the preset setup on the resume path for already-persisted sessions', async () => {
+    const due = dueTask()
+    const table = makeTable([[due.id, due]])
+    const resumed: Array<Record<string, unknown>> = []
+    const { svc } = makeService(table, {
+      agentPresets: demoPresets(),
+      agentDefaultModel: demoDefaults(),
+      agents: {
+        resume: async (options: never) => {
+          resumed.push(options as Record<string, unknown>)
+          return handleFor((options as { resumeSessionId: string }).resumeSessionId)
+        },
+        create: async () => { throw new Error('unreachable') },
+      },
+    } as never)
+
+    await fire(svc, due)
+
+    assert.equal(resumed.length, 1)
+    assert.equal(typeof resumed[0]!.setup, 'function')
+    assert.deepEqual(resumed[0]!.agentOptions, { provider: 'demo', model: 'demo-model' })
+    assert.equal((table.rows.get(due.id)!.lastError), undefined)
+  })
+
+  it('fires without setup when the deployment has neither preset roster nor model defaults', async () => {
+    const due = dueTask()
+    const table = makeTable([[due.id, due]])
+    const created: Array<Record<string, unknown>> = []
+    const { svc } = makeService(table, {
+      agents: {
+        resume: async () => { throw new Error('session not found') },
+        create: async (options: never) => {
+          created.push(options as Record<string, unknown>)
+          return handleFor((options as { sessionId: string }).sessionId)
+        },
+      },
+    } as never)
+
+    await fire(svc, due)
+
+    assert.equal(created.length, 1)
+    assert.equal(created[0]!.setup, undefined)
+    assert.equal(created[0]!.agentOptions, undefined)
+    assert.equal((created[0]!.meta as { agentPreset?: string }).agentPreset, undefined)
+    assert.equal(table.rows.get(due.id)!.lastRunAt, new Date(NOW).toISOString())
+  })
+
+  it('applies task model edits to the retained run agent in place', async () => {
+    const due = dueTask()
+    const table = makeTable([[due.id, due]])
+    const created: Array<Record<string, unknown>> = []
+    const { svc, raw } = makeService(table, {
+      agentDefaultModel: demoDefaults(),
+      agents: {
+        resume: async () => { throw new Error('session not found') },
+        create: async (options: never) => {
+          created.push(options as Record<string, unknown>)
+          return handleFor((options as { sessionId: string }).sessionId)
+        },
+      },
+    } as never)
+
+    await fire(svc, due)
+    assert.equal(created.length, 1)
+
+    // Edit the task model; the next fire must reach the LIVE agent without
+    // recomposing — the installed selection ref is updated in place.
+    due.model = { provider: 'custom', model: 'edited-model' }
+    await fire(svc, due)
+
+    assert.equal(created.length, 1, 'retained handle reused, no re-create')
+    const carried = (raw['compositions'] as Map<ScheduledTaskId, {
+      selectionRef: { current: { provider: string; model: string } | undefined }
+    }>).get(due.id)
+    assert.deepEqual(carried?.selectionRef.current, { provider: 'custom', model: 'edited-model' })
+  })
+
+  it('recomposes through dispose + resume when the default preset changes', async () => {
+    const due = dueTask()
+    const table = makeTable([[due.id, due]])
+    const presetId = { value: 'demo-preset' }
+    const mounts: Array<[unknown, string]> = []
+    let disposed = 0
+    let resumed = 0
+    let resumeFailures = 1
+    const created: Array<Record<string, unknown>> = []
+    const { svc, raw } = makeService(table, {
+      agentPresets: demoPresets(mounts, presetId),
+      agentDefaultModel: demoDefaults(),
+      agents: {
+        resume: async (options: never) => {
+          if (resumeFailures > 0) {
+            resumeFailures -= 1
+            throw new Error('session not found')
+          }
+          resumed += 1
+          await (options as { setup?: (ctx: unknown) => Promise<void> }).setup?.(setupCtx())
+          return handleFor((options as { resumeSessionId: string }).resumeSessionId)
+        },
+        create: async (options: never) => {
+          created.push(options as Record<string, unknown>)
+          await (options as { setup?: (ctx: unknown) => Promise<void> }).setup?.(setupCtx())
+          return {
+            agent: {
+              session: { id: (options as { sessionId: string }).sessionId, header: { cwd: '/opt/demo-workspace' }, append: () => {} },
+              followup: () => {},
+            },
+            dispose: async () => { disposed += 1 },
+          }
+        },
+      },
+    } as never)
+
+    // First fire creates with the demo preset mounted.
+    await fire(svc, due)
+    assert.equal(created.length, 1)
+    assert.equal(mounts.length, 1)
+
+    // Change the default preset; the next fire must drop the stale handle and
+    // resume the session with the new preset mounted.
+    presetId.value = 'other-preset'
+    await fire(svc, due)
+
+    assert.equal(disposed, 1, 'stale handle disposed')
+    assert.equal(resumed, 1, 'session resumed under the new preset')
+    assert.equal(created.length, 1, 'no second create')
+    assert.equal(mounts.length, 2)
+    assert.equal(mounts[1]![1], 'other-preset')
+    const carried = (raw['compositions'] as Map<ScheduledTaskId, { presetId?: string }>).get(due.id)
+    assert.equal(carried?.presetId, 'other-preset')
+  })
+
+  it('surfaces a broken preset roster as a task error instead of a silent tool-less run', async () => {
+    const due = dueTask()
+    const table = makeTable([[due.id, due]])
+    const { svc, warnings } = makeService(table, {
+      agentPresets: {
+        resolve: async () => { throw new Error('agent-presets: preset "default" not found') },
+        mount: async () => {},
+      },
+    } as never)
+
+    await fire(svc, due)
+
+    assert.match(table.rows.get(due.id)!.lastError?.message ?? '', /not found/)
+    assert.equal(table.rows.get(due.id)!.lastRunAt, undefined)
+    assert.equal(warnings.length >= 1, true)
   })
 })
 

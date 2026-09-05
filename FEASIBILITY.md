@@ -106,6 +106,30 @@ way. Limitations: it assumes the harness keeps `.footerActions` a single
 nowrap row; a third footer occupant would overlap the second band unless its
 own package carries the same rule (a dsh-side layout would be the real fix).
 
+## Unattended agents get zero tools unless the plugin mounts the agent preset
+
+An agent created through `ctx.agents.create()` without a `setup` callback
+boots with a **bare scope: zero tools and a stub system prompt** (~1.8k chars
+vs ~6.9k). The agent loop still runs, so the model answers in one text-only
+step — tool-call syntax leaks into the message text and the turn ends
+`completed` within seconds, with no error anywhere. This bit scheduled-task:
+every timed run "finished" in 3–14 seconds having done nothing. Tool
+visibility is per-agent-scope (the preset's standing mount), not a global
+registry, so a bare agent sees nothing even though tool packages are loaded
+in-process. Fix (shipped API, same pattern as `dsh-webhook`): inject the
+composition at both `agents.create` and `agents.resume` time via
+`ctx.get('agentPresets')` → `resolve(undefined)` → `mount(agentCtx, preset.id)`
+in `setup`, and record `meta.agentPreset`. Session-controller's
+`composeAgent` is the host-owned reference. Mounting the preset alone is NOT
+sufficient: the preset's prompt assembly reads `{{model}}`/`{{provider}}`
+from the Agent-scoped model selection, so the same `setup` must also
+`installModelSelection(agentCtx, { current, assembled: undefined })` (exported
+from `@deepseek-ai/dsh-agent`; the headless bundle is the minimal reference)
+and pass `agentOptions` — the task's stored model, else
+`ctx.get('agentDefaultModel').currentSelection()`. Tolerate `agentPresets ===
+undefined` (deployments without a roster); let resolve/mount failures throw so
+the fire records the reason instead of silently running tool-less.
+
 ## Verification
 
 Headless-browser boot against an isolated `dsh web` instance (temporary `$DSH_HOME` under `/tmp`,
