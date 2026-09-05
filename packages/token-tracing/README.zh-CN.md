@@ -6,13 +6,13 @@
 
 ## 安装
 
-Token 追踪尚未发布到 npm —— 从已构建的本仓库源码检出安装（构建前置见 [CONTRIBUTING.md](../../CONTRIBUTING.md)；插件 ↔ dsh 兼容表见仓库根 README，已在 `dsh-v0.1.2-rc.1` 上验证）。
+一条命令通过聚合 bundle 拉齐三个半包（host 服务 / remotes 组装 / 浏览器 UI）：
 
 ```sh
-dsh plugin --profile web add ./packages/token-tracing/host ./packages/token-tracing/remotes ./packages/token-tracing/client
+dsh plugin --profile web add @qihongmu/dsh-plugins-token-tracing-bundle
 ```
 
-一条命令把三个半包（host 服务 / remotes 组装 / 浏览器 UI）挂载进 web profile，之后重启 `dsh web`。安装前就存在的会话会在后台自动补算，无需等待数据积累。
+已在 DeepSeek Harness `dsh-v0.1.2-rc.1` 上验证——插件 ↔ dsh 兼容表见仓库根 README。建议 **bundle 与逐个安装二选一，不要混用**；只有需要精细控制时才在源码检出内逐个安装。安装前就存在的会话会在 `dsh web` 重启后的后台自动补算，无需等待数据积累。
 
 ## 截图
 

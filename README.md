@@ -17,23 +17,22 @@ Requires Node.js ≥ 22 and pnpm. **Plugin ↔ dsh version mapping** — check y
 
 | Plugin version | Compatible dsh | dsh install |
 | -------------- | -------------- | ----------- |
-| dev (unreleased, incl. token-tracing M3) | `dsh-v0.1.2-rc.1` (gates + real-data browser acceptance green) | source checkout at tag `dsh-v0.1.2-rc.1` |
-| **0.1.1-alpha.2** | `dsh-v0.1.2-alpha.2` (the 0.1.2-alpha line; only alpha.2 is verified) | `npm i -g @deepseek-ai/dsh@0.1.2-alpha.2` — the alpha line is **not** npm `latest`, pin it explicitly |
-| **0.1.0** | dsh ≤ `0.1.1-rc.2` (verified on `dsh-v0.1.1-rc.2`) | `npm i -g @deepseek-ai/dsh` (`latest` dist-tag) |
+| dev (Scheduled Tasks, unreleased) | `dsh-v0.1.2-rc.1` (gates + real-data browser acceptance green) | source checkout at tag `dsh-v0.1.2-rc.1` |
+| **Token Tracing 0.1.0** | `dsh-v0.1.2-rc.1` (verified on rc.1) | `npm i -g @deepseek-ai/dsh` (`latest` dist-tag) |
+| **Scheduled Tasks 0.1.1-alpha.2** | `dsh-v0.1.2-alpha.2` (the 0.1.2-alpha line; only alpha.2 is verified) | `npm i -g @deepseek-ai/dsh@0.1.2-alpha.2` — the alpha line is **not** npm `latest`, pin it explicitly |
+| **Scheduled Tasks 0.1.0** | dsh ≤ `0.1.1-rc.2` (verified on `dsh-v0.1.1-rc.2`) | `npm i -g @deepseek-ai/dsh@0.1.1-rc.2` |
 
 Running dsh from a source checkout? Match the checkout tag to the table above — plugin `0.1.0` fails to boot on the 0.1.2-alpha line (upstream removed `dsh-client-runtime` / `ConnectionHandle.api`), and plugin `0.1.1-alpha.2` is required from `dsh-v0.1.2-alpha.1` on. The dev tree re-certified against `dsh-v0.1.2-rc.1` on 2026-09-01: every plugin-facing package (ui-slots / ui-sidebar / ui-conversation / ui-primitives / locale / api-remotes / session-controller / core-session / storage-domain) is source-identical from alpha.4 to rc.1, and rc.1's storage changes are additive-only (`DomainSpec.compatibleVersions` / `invalidRecords`, both optional with the old loud path as default).
 
 ```sh
+# Scheduled Tasks
 dsh plugin --profile web add @qihongmu/dsh-plugins-scheduled-task-bundle
+
+# Token Tracing
+dsh plugin --profile web add @qihongmu/dsh-plugins-token-tracing-bundle
 ```
 
-One command pulls the three halves (host service, remotes assembly, browser UI) and registers them in the web profile. Restart `dsh web`, then open the plugin's guide (linked above) to start using it.
-
-**Token Tracing** is not on npm yet — from a built source checkout of this repository (see [CONTRIBUTING.md](CONTRIBUTING.md)), install its three halves directly and restart `dsh web`:
-
-```sh
-dsh plugin --profile web add ./packages/token-tracing/host ./packages/token-tracing/remotes ./packages/token-tracing/client
-```
+One command pulls the plugin's three halves (host service, remotes assembly, browser UI) and registers them in the web profile. Restart `dsh web`, then open the plugin's guide (linked above) to start using it.
 
 > Install the **bundle or the individual halves — not both**. The three-command form (`dsh plugin --profile web add ./packages/scheduled-task/host ./packages/scheduled-task/remotes ./packages/scheduled-task/client`) only applies to a source checkout, and needs fine-grained control.
 

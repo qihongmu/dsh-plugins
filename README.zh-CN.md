@@ -17,22 +17,22 @@
 
 | 插件版本 | 兼容的 dsh | dsh 安装方式 |
 | -------- | ---------- | ------------ |
-| **0.1.1-alpha.2** | `dsh-v0.1.2-alpha.2`（0.1.2-alpha 线，仅实测 alpha.2） | `npm i -g @deepseek-ai/dsh@0.1.2-alpha.2` —— alpha 线**不是** npm 的 `latest`，必须显式指定版本 |
-| **0.1.0** | dsh ≤ `0.1.1-rc.2`（在 `dsh-v0.1.1-rc.2` 上验证） | `npm i -g @deepseek-ai/dsh`（`latest` dist-tag） |
+| 开发版（定时任务，未发布） | `dsh-v0.1.2-rc.1`（门禁 + 真实数据浏览器验收通过） | 源码检出，tag `dsh-v0.1.2-rc.1` |
+| **Token 追踪 0.1.0** | `dsh-v0.1.2-rc.1`（rc.1 上验证） | `npm i -g @deepseek-ai/dsh`（`latest` dist-tag） |
+| **定时任务 0.1.1-alpha.2** | `dsh-v0.1.2-alpha.2`（0.1.2-alpha 线，仅实测 alpha.2） | `npm i -g @deepseek-ai/dsh@0.1.2-alpha.2` —— alpha 线**不是** npm 的 `latest`，必须显式指定版本 |
+| **定时任务 0.1.0** | dsh ≤ `0.1.1-rc.2`（在 `dsh-v0.1.1-rc.2` 上验证） | `npm i -g @deepseek-ai/dsh@0.1.1-rc.2` |
 
 从源码 checkout 跑 dsh？请让 checkout 的 tag 与上表对应——插件 `0.1.0` 在 0.1.2-alpha 线上无法启动（上游删除了 `dsh-client-runtime` / `ConnectionHandle.api`）；自 `dsh-v0.1.2-alpha.1` 起需要插件 `0.1.1-alpha.2`。
 
 ```sh
+# 定时任务
 dsh plugin --profile web add @qihongmu/dsh-plugins-scheduled-task-bundle
+
+# Token 追踪
+dsh plugin --profile web add @qihongmu/dsh-plugins-token-tracing-bundle
 ```
 
-一条命令拉齐三个半包（host 服务 / remotes 组装 / 浏览器 UI）并注册到 web profile。重启 `dsh web` 后，按上表中的使用指南开始使用。
-
-**Token 追踪**尚未发布到 npm —— 从已构建的本仓库源码检出直接安装三个半包（构建前置见 [CONTRIBUTING.md](CONTRIBUTING.md)），重启 `dsh web`：
-
-```sh
-dsh plugin --profile web add ./packages/token-tracing/host ./packages/token-tracing/remotes ./packages/token-tracing/client
-```
+一条命令拉齐插件的三个半包（host 服务 / remotes 组装 / 浏览器 UI）并注册到 web profile。重启 `dsh web` 后，按上表中的使用指南开始使用。
 
 > **bundle 与逐个安装二选一，不要混用。** 三命令形式（`dsh plugin --profile web add ./packages/scheduled-task/host ./packages/scheduled-task/remotes ./packages/scheduled-task/client`）只适用于源码检出，且仅在需要精细控制时使用。
 

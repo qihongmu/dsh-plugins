@@ -1,8 +1,12 @@
+`@qihongmu/dsh-plugins-token-tracing-bundle` is the **aggregate install bundle** of the Token Tracing plugin — one command installs and mounts all three halves. This is the recommended install target.
+
+---
+
 # Token Tracing
 
 Token attribution for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness): answers "where did the tokens go" — every LLM call in a conversation is traced as a span (user input, system prompt, tool definitions, each tool result, reasoning, cache reads/writes), with a per-turn waterfall inside the conversation and a cross-session dashboard with actionable optimization hints. The DSH library itself is never modified.
 
-[简体中文](README.zh-CN.md)
+[简体中文](https://github.com/qihongmu/dsh-plugins/blob/main/packages/token-tracing/README.zh-CN.md)
 
 ## Install
 
@@ -18,7 +22,7 @@ Verified against DeepSeek Harness `dsh-v0.1.2-rc.1` — the repository root READ
 
 | Token Trace tab (in a conversation) | Token dashboard (cross-session) |
 | ----------------------------------- | ------------------------------- |
-| ![Token Trace tab](screenshots/trace.png) | ![Token dashboard](screenshots/dashboard.png) |
+| ![Token Trace tab](https://raw.githubusercontent.com/qihongmu/dsh-plugins/main/packages/token-tracing/screenshots/trace.png) | ![Token dashboard](https://raw.githubusercontent.com/qihongmu/dsh-plugins/main/packages/token-tracing/screenshots/dashboard.png) |
 
 Unrelated session titles in the sidebar are blurred for privacy.
 
