@@ -1,6 +1,6 @@
 {
   "name": "@qihongmu/dsh-plugins-token-tracing",
-  "version": "0.1.0",
+  "version": "0.1.1-alpha.1",
   "license": "MIT",
   "author": "Qihong <qihong.m.u+dev@gmail.com>",
   "repository": {
