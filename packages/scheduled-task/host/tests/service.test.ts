@@ -57,6 +57,7 @@ function makeService(table: ReturnType<typeof makeTable>, overrides: {
   svc['table'] = table
   svc['handles'] = new Map()
   svc['compositions'] = new Map()
+  svc['firing'] = new Set()
   svc['failures'] = new Map()
   svc['appliedTitles'] = new Map()
   svc['attachedSessions'] = new Set()
@@ -446,6 +447,36 @@ describe('fireOne preset composition', () => {
     assert.equal(mounts[1]![1], 'other-preset')
     const carried = (raw['compositions'] as Map<ScheduledTaskId, { presetId?: string }>).get(due.id)
     assert.equal(carried?.presetId, 'other-preset')
+  })
+
+  it('ignores a re-entrant admission while the same task fire is in flight', async () => {
+    const due = dueTask()
+    const table = makeTable([[due.id, due]])
+    let createCalls = 0
+    let release!: () => void
+    const gate = new Promise<void>(resolve => { release = resolve })
+    const { svc } = makeService(table, {
+      agentDefaultModel: demoDefaults(),
+      agents: {
+        resume: async () => { throw new Error('session not found') },
+        create: async (options: never) => {
+          createCalls += 1
+          await gate
+          return handleFor((options as { sessionId: string }).sessionId)
+        },
+      },
+    } as never)
+
+    // First admission stalls inside composition; a second one (as a rearm
+    // during the window would trigger) must not start a second fire.
+    const first = fire(svc, due)
+    const second = fire(svc, due)
+    release()
+    await Promise.all([first, second])
+
+    assert.equal(createCalls, 1, 'only one live agent composed for the session')
+    const carried = (svc as unknown as { firing: Set<ScheduledTaskId> }).firing
+    assert.equal(carried.has(due.id), false, 'guard released after the fire settles')
   })
 
   it('surfaces a broken preset roster as a task error instead of a silent tool-less run', async () => {

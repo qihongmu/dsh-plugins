@@ -164,6 +164,12 @@ export class ScheduledTaskService extends TypertRemoteService {
    *  selection (edits reach the live agent through this ref) and the preset
    *  id mounted at compose time (a changed default forces recomposition). */
   private readonly compositions = new Map<ScheduledTaskIdType, { selectionRef: ModelSelectionRef; presetId?: string }>()
+  /** Tasks with a fire currently in flight. Composing a run agent takes
+   *  seconds (a first preset standing mount), and the record only stops
+   *  being due at the END of fireOne — a rearm in between (an edit, another
+   *  task's mutation) would otherwise admit the SAME due task twice and
+   *  compose two live agents for one session id. */
+  private readonly firing = new Set<ScheduledTaskIdType>()
   /** Last task title pinned onto each run session (avoids re-rename spam). */
   private readonly appliedTitles = new Map<SessionId, string>()
   /** Run sessions already attached to their bound workspace (avoids re-attach churn). */
@@ -363,6 +369,8 @@ export class ScheduledTaskService extends TypertRemoteService {
 
   /** Queue one task run, advance its durable record, and flush its Session. */
   private async fireOne(id: ScheduledTaskIdType, record: ScheduledTaskRecord, now: number): Promise<void> {
+    if (this.firing.has(id)) return
+    this.firing.add(id)
     try {
       const { agent, sessionId } = await this.ensureAgent(record)
       // Pin the conversation title to the task title (re-pins only on change,
@@ -409,6 +417,8 @@ export class ScheduledTaskService extends TypertRemoteService {
       } catch (persistError: unknown) {
         this.ctx.logger.warn(`scheduled-task: could not persist failure of task "${id}": ${renderThrown(persistError)}`)
       }
+    } finally {
+      this.firing.delete(id)
     }
   }
 
