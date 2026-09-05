@@ -93,7 +93,7 @@ case "$cmd" in
     # and API calls need the auth cookie the token exchange sets.
     token=${2:-}
     if [ -z "$token" ] && [ -f "$VERIFY_DIR/web.log" ]; then
-      token=$(grep -o 'token=[A-Za-z0-9]*' "$VERIFY_DIR/web.log" | head -1 | cut -d= -f2)
+      token=$(grep -o 'token=[A-Za-z0-9-]*' "$VERIFY_DIR/web.log" | head -1 | cut -d= -f2)
     fi
     [ -n "$token" ] || die "probe: no token (pass it, or boot with the log at $VERIFY_DIR/web.log)"
     plugin=${3:-scheduled-task}
