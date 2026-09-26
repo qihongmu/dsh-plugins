@@ -9,7 +9,7 @@
 
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { IconDataOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconDataOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type { TokenDashboardFace } from '../slots.ts'
 import { DashboardView } from './DashboardView.tsx'
@@ -57,7 +57,7 @@ export function TokenDashboardEntry({ wide, remote, openSession, t }: TokenDashb
           aria-expanded={open}
           onClick={() => { setOpen(current => !current) }}
         >
-          <IconDataOutline16 />
+          <IconDataOutlineRegular />
           {wide && <span className={css.badgeLabel}>{t('dashboard.title')}</span>}
         </button>
       </div>

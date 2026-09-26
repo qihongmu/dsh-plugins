@@ -1,6 +1,6 @@
 {
   "name": "@qihongmu/dsh-plugins-scheduled-task",
-  "version": "0.1.1-alpha.2",
+  "version": "0.1.1-alpha.3",
   "license": "MIT",
   "author": "Qihong <qihong.m.u+dev@gmail.com>",
   "repository": {
@@ -26,7 +26,12 @@
       "default": "./lib/types/types.js"
     },
     "./remote": {
-      "types": "./lib/typert.remote-client.d.ts"
+      "types": "./lib/typert.remote-client.d.ts",
+      "default": "./lib/typert.remote-client.js"
+    },
+    "./typert": {
+      "types": "./lib/typert.host.d.ts",
+      "default": "./lib/typert.host.js"
     },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
@@ -42,7 +47,7 @@
     "@deepseek-ai/cordis": "*",
     "@deepseek-ai/dsh-agent": "*",
     "@deepseek-ai/dsh-agent-default-model": "*",
-    "@deepseek-ai/dsh-agent-presets": "*",
+    "@deepseek-ai/dsh-agent-preset-registry": "*",
     "@deepseek-ai/dsh-brand": "*",
     "@deepseek-ai/dsh-invariants": "*",
     "@deepseek-ai/dsh-llm": "*",
@@ -58,6 +63,10 @@
   },
   "files": [
     "lib",
+    "lib/typert.host.js",
+    "lib/typert.host.d.ts",
+    "lib/typert.remote-client.js",
+    "lib/typert.remote-client.d.ts",
     "cordis.patch.yml",
     "!lib/**/*.map",
     "!lib/**/*.tsbuildinfo"

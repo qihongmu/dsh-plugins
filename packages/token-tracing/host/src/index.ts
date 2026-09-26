@@ -67,6 +67,7 @@ function renderThrown(value: unknown): string {
  * Global token-tracing capability. The `sessions` storage-domain table is the
  * durable aggregate authority; folders, followers, and the trace cache are
  * disposable projections rebuilt from the platform's own session log.
+ * @typert service tokenTracing
  */
 export class TokenTracingService extends TypertRemoteService {
   /** Services required before folds can be ingested or queried. */

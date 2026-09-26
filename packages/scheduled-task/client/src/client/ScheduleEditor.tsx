@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { IconChevronDownOutline14, IconTrashOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconChevronDownOutlineRegular, IconTrashOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import { weekdaySummary } from './format.ts'
 import type { ScheduledTaskTranslate } from './format.ts'
 import type { ScheduledTaskKey } from './locales.ts'
@@ -171,7 +171,7 @@ function WeekdayPicker({ t, value, onChange }: {
         onClick={() => { setOpen(current => !current) }}
       >
         <span>{summary}</span>
-        <IconChevronDownOutline14 size={12} />
+        <IconChevronDownOutlineRegular size={12} />
       </button>
       {open && (
         <div className={css.weekMenu} role="listbox" aria-multiselectable="true">
@@ -251,7 +251,7 @@ export function ScheduleEditor({
         )}
         {preview !== '' && <span className={css.schedulePreview}>{preview}</span>}
         <button type="button" className={css.clearButton} aria-label={t('schedule.clear')} onClick={onClear}>
-          <IconTrashOutline16 size={14} />
+          <IconTrashOutlineRegular size={14} />
         </button>
       </div>
     </div>

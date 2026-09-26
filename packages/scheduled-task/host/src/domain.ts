@@ -121,7 +121,7 @@ const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/
 
 /** Convert `date` (YYYY-MM-DD) + `time` (HH:mm or HH:mm:ss) in `timeZone` to canonical epoch ms. */
 function atInstant(date: string, time: string, timeZone: string, now: number): number {
-  const record = createAtScheduleRecord(ScheduleId('task'), 'task', { date, time: normalizeTime(time), time_zone: timeZone }, now)
+  const record = createAtScheduleRecord(ScheduleId('task'), 'task', { date, time: normalizeTime(time), time_zone: timeZone }, now, 'task')
   return Date.parse(record.scheduledAt)
 }
 
@@ -259,18 +259,18 @@ export function buildRule(
     return {
       kind: 'after',
       afterSeconds: input.after_seconds,
-      scheduledAt: translate(() => createAfterScheduleRecord(ScheduleId('task'), 'task', input.after_seconds!, now)),
+      scheduledAt: translate(() => createAfterScheduleRecord(ScheduleId('task'), 'task', input.after_seconds!, now, 'task')),
     }
   }
   if (input.at !== undefined) {
     const at = validateAt(input.at)
-    return { kind: 'at', scheduledAt: translate(() => createAtScheduleRecord(ScheduleId('task'), 'task', at, now)) }
+    return { kind: 'at', scheduledAt: translate(() => createAtScheduleRecord(ScheduleId('task'), 'task', at, now, 'task')) }
   }
   if (input.every_seconds !== undefined) {
     return {
       kind: 'every',
       everySeconds: input.every_seconds,
-      scheduledAt: translate(() => createEveryScheduleRecord(ScheduleId('task'), 'task', input.every_seconds!, now)),
+      scheduledAt: translate(() => createEveryScheduleRecord(ScheduleId('task'), 'task', input.every_seconds!, now, 'task')),
     }
   }
   if (input.hourly !== undefined) {

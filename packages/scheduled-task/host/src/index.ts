@@ -10,7 +10,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import { installModelSelection } from '@deepseek-ai/dsh-agent'
 import type { Agent, AgentHandle, AgentSetup, ModelSelection, ModelSelectionRef } from '@deepseek-ai/dsh-agent'
 import type { AgentDefaultModelConfig } from '@deepseek-ai/dsh-agent-default-model'
-import type { AgentPresets } from '@deepseek-ai/dsh-agent-presets'
+import type { AgentPresetRegistry } from '@deepseek-ai/dsh-agent-preset-registry'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 import { SessionId } from '@deepseek-ai/dsh-session'
 import type { SessionTitleService } from '@deepseek-ai/dsh-session-title'
@@ -18,6 +18,15 @@ import type { KvTable } from '@deepseek-ai/dsh-storage-domain'
 import { WorkspaceId } from '@deepseek-ai/dsh-workspace'
 import { setApprovalPolicy } from '@deepseek-ai/dsh-user-approval'
 import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+import type { ContextFormed } from '@deepseek-ai/dsh-llm'
+
+// This plugin is its own user-message producer: declare its source kind in the
+// merge-extensible MessageSourceMap (no shared catch-all `plugin` kind exists).
+declare module '@deepseek-ai/dsh-llm' {
+  interface MessageSourceMap {
+    'scheduled-task': { kind: 'scheduled-task' } & ContextFormed
+  }
+}
 import {
   advanceRule,
   buildRule,
@@ -152,6 +161,7 @@ function applyCarry(target: ScheduledTaskRecord, carry: ScheduledTaskCarryFields
  * the single timer is a disposable projection of the earliest due target. Each
  * task's run Session is created lazily on first fire and kept live while the
  * process runs.
+ * @typert service scheduledTasks
  */
 export class ScheduledTaskService extends TypertRemoteService {
   /** Services required before tasks can be listed, mutated, or fired. */
@@ -383,7 +393,7 @@ export class ScheduledTaskService extends TypertRemoteService {
       setApprovalPolicy(agent.session, record.confirmBeforeChange ? 'ask' : 'never')
       agent.followup(createUserMessage({
         content: [{ type: 'text', text: renderTaskFraming(record) }],
-        source: { kind: 'plugin', plugin: 'scheduled-task' },
+        source: { kind: 'scheduled-task' },
       }))
       const runAt = new Date(now).toISOString()
       const advanced = advanceRule(record.rule, now)
@@ -485,9 +495,12 @@ export class ScheduledTaskService extends TypertRemoteService {
     presetId: string
     mountPreset: (agentCtx: Context) => Promise<void>
   } | undefined> {
-    const presets: AgentPresets | undefined = this.ctx.get('agentPresets')
+    const presets: AgentPresetRegistry | undefined = this.ctx.get('agentPresets')
     if (presets === undefined) return undefined
     const preset = await presets.resolve(undefined)
+    if (preset.broken !== undefined) {
+      throw new Error(`default agent preset "${preset.id}" failed to activate: ${preset.broken}`)
+    }
     return {
       presetId: preset.id,
       mountPreset: async (agentCtx: Context) => {

@@ -6,7 +6,7 @@
  */
 
 import { useEffect, useState } from 'react'
-import { IconRefreshOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconRefreshOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 import type {
@@ -189,7 +189,7 @@ export function ScheduledTasksPanel({ wide, remote, listProjects, listModels, t 
           aria-expanded={open}
           onClick={() => { setOpen(current => !current) }}
         >
-          <IconRefreshOutline16 />
+          <IconRefreshOutlineRegular />
           {wide && <span className={css.badgeLabel}>{t('trigger.label')}</span>}
           {unread > 0 && <span className={css.badgeCount}>{unread}</span>}
         </button>

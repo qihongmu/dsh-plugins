@@ -26,7 +26,8 @@ const atRule = z.object({
 })
 const everyRule = z.object({
   kind: z.literal('every'),
-  everySeconds: z.number().int().min(300),
+  // Mirrors dsh MIN_EVERY_INTERVAL_SECONDS (lowered 300 → 60 in 0.1.7).
+  everySeconds: z.number().int().min(60),
   scheduledAt: z.string(),
 })
 const hourlyRule = z.object({

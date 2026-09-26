@@ -53,6 +53,29 @@ present** under the workspace root's `packages/`. For the DSH-repo build that is
 meta source (`cordis`, `dsh-typert-protocol`, `dsh-session`, `dsh-agent`, …) into
 `dsh-plugins/packages/`, which defeats the goal of an independent, minimal plugin project.
 
+A 0.1.7-era fake-workspace attempt (2026-09-26: real-copy the plugin hosts + a real copy of
+`packages/typert/protocol` into a scratch root with aggregate `tsconfig.host.json`) gets past
+registration and `@typert service` discovery, but the analyzer then follows plugin types into
+**harness `lib/types/*.d.ts`** and fails on generated dts shapes (e.g. `TypertLookupMap values
+must be TypertLookup<Host, Wire>` from `dsh-session`'s packaged declarations). Vendoring the
+source of every transitively-typed harness package is the only way through — same conclusion,
+larger cost. The vendored-artifact workaround below stays the plan of record; on dsh 0.1.7 the
+hand-maintained artifacts additionally need the **lazy `create()` codec factory** (0.1.2's
+`schema:` field is rejected at mount by `typert-registry`'s `validateCodec`) and the client-side
+`TypertRemoteNamespaceMap` augmentation must live in a **client source file**, not in a
+paths-resolved d.ts (a d.ts reached through a `paths` substitution no longer merges its
+`declare module` block into the program under the 0.1.7 dts layout; the same augment block in a
+client `.ts` merges fine).
+
+The host face (`./typert` → `lib/typert.host.js`) is likewise hand-vendored: the typert-loader
+imports and validates it for every package whose manifest exports `./typert` (face/package/
+schemas/model/invocations), and `typert-registry` stores it for Host-side wire validation. The
+vendored manifest keeps a **single source of truth** for descriptors — `invocations` re-exports
+`typert.remote-client.js`'s `descriptors` array (identical shape for direct, non-lookup methods;
+`create()` factories already in place) — and `model` carries the minimal reflection structure
+the loader accepts (`services: [{ key, exportName, summary, tags: [], members: [{name,
+signature, kind: 'method'}], types: [] }], events: [], objects: []`).
+
 ## Workaround used (how the bridge is unblocked)
 
 **Vendor the already-generated `./remote` contribution instead of regenerating it.** The DSH-repo

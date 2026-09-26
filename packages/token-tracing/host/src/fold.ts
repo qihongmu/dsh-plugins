@@ -19,6 +19,7 @@
  */
 
 import type { TokenUsage } from '@deepseek-ai/dsh-llm/types'
+import type { AssistantStreamRecord } from '@deepseek-ai/dsh-llm/assistant-stream'
 import type { SessionEvent } from '@deepseek-ai/dsh-session/types'
 // Type-only: pull the plugin-merged session event variants (`llm/retry*`,
 // `compaction/*`) into the SessionEventMap program before folding.
@@ -90,6 +91,15 @@ function contentChars(content: unknown): number {
   return json === undefined ? 0 : json.length
 }
 
+/** Last usage chunk embedded in a compacted attempt stream, if the adapter reported one. */
+function streamUsageOf(stream: readonly AssistantStreamRecord[]): TokenUsage | undefined {
+  for (let index = stream.length - 1; index >= 0; index -= 1) {
+    const record = stream[index]
+    if (record !== undefined && record.type === 'chunk' && record.chunk.type === 'usage') return record.chunk.usage
+  }
+  return undefined
+}
+
 /**
  * Scale raw component estimates so they sum to `total` exactly: proportional
  * allocation with the rounding drift absorbed into the largest component.
@@ -150,7 +160,9 @@ export class SessionFolder {
 
   private surface: SurfaceNode[] = []
   private readonly toolNames = new Map<string, string>()
-  private header: { systemChars: number; toolsChars: number } | null = null
+  /** Characters of the live system prompt, from `system/message` events (the retired header field moved there). */
+  private systemChars = 0
+  private header: { toolsChars: number } | null = null
   /** Header changed since the last attempt close (reason initial/resume/change). */
   private headerChanged = false
   /** A compaction (or other surface replacement) happened since the last attempt close. */
@@ -208,8 +220,9 @@ export class SessionFolder {
       case 'turn/end': return this.onTurnEnd(event)
       case 'step/start': return this.onStepStart(event)
       case 'step/end': return this.onStepEnd(event)
-      case 'assistant/chunk': return this.onAssistantChunk(event)
       case 'assistant/message': return this.onAssistantMessage(event)
+      case 'assistant/attempt': return this.onAssistantAttempt(event)
+      case 'system/message': return this.onSystemMessage(event)
       case 'llm/retry': return this.onLlmRetry(event)
       case 'llm/retry-started': return this.onLlmRetryStarted(event)
       case 'tool/call': return this.onToolCall(event)
@@ -284,18 +297,11 @@ export class SessionFolder {
     this.attemptState = { kind: 'idle' }
   }
 
-  private onAssistantChunk(event: SessionEvent<'assistant/chunk'>): void {
-    if (this.attemptState.kind !== 'open') return
-    const { chunk, turn, step } = event.data
-    if (this.attemptState.turn !== turn || this.attemptState.step !== step) return
-    if (chunk.type === 'usage') this.attemptState.sample = chunk.usage
-  }
-
   private onAssistantMessage(event: SessionEvent<'assistant/message'>): void {
-    const { turn, step, usage, interrupted } = event.data
+    const { turn, step, usage, interrupted, stream } = event.data
     if (this.current !== null && interrupted === true) this.current.interrupted = true
     if (this.attemptState.kind === 'open' && this.attemptState.turn === turn && this.attemptState.step === step) {
-      this.closeAttempt(event.seq, event.time, usage ?? this.attemptState.sample, false)
+      this.closeAttempt(event.seq, event.time, usage ?? streamUsageOf(stream ?? []), false)
     } else {
       // Tolerant path: a message without its bracket (seed edge, lost event).
       this.closeStandalone(turn, step, event.seq, event.time, usage, interrupted === true)
@@ -313,6 +319,21 @@ export class SessionFolder {
       this.closeAttempt(event.seq, event.time, this.attemptState.sample, true)
     }
     this.attemptState = { kind: 'settled' }
+  }
+
+  /**
+   * A settled attempt that committed no surface message (failed, retried, or
+   * stream-cancelled). It closes nothing — the retry bracket still owns the
+   * attempt boundary — but its embedded stream is where a partial usage
+   * report survives for the retry-closed attempt (formerly live `chunk`
+   * events).
+   */
+  private onAssistantAttempt(event: SessionEvent<'assistant/attempt'>): void {
+    if (this.attemptState.kind !== 'open') return
+    const { turn, step, stream } = event.data
+    if (this.attemptState.turn !== turn || this.attemptState.step !== step) return
+    const usage = streamUsageOf(stream)
+    if (usage !== undefined) this.attemptState.sample = usage
   }
 
   private onLlmRetryStarted(event: SessionEvent<'llm/retry-started'>): void {
@@ -459,13 +480,11 @@ export class SessionFolder {
   /** Full-request composition: system + tools + every surface node, scaled to the exact prompt total. */
   private composeSurface(promptTotal: number): ComponentSplit[] {
     const raws: RawComponent[] = []
-    if (this.header !== null) {
-      if (this.header.systemChars > 0) {
-        raws.push({ kind: 'system-prompt', tokens: estimateTokens(this.header.systemChars) })
-      }
-      if (this.header.toolsChars > 0) {
-        raws.push({ kind: 'tool-definitions', tokens: estimateTokens(this.header.toolsChars) })
-      }
+    if (this.systemChars > 0) {
+      raws.push({ kind: 'system-prompt', tokens: estimateTokens(this.systemChars) })
+    }
+    if (this.header !== null && this.header.toolsChars > 0) {
+      raws.push({ kind: 'tool-definitions', tokens: estimateTokens(this.header.toolsChars) })
     }
     for (const node of this.surface) raws.push(splitForNode(node))
     return allocateScaled(promptTotal, raws)
@@ -507,10 +526,13 @@ export class SessionFolder {
   private onUserMessage(event: SessionEvent<'user/message'>): void {
     const source = event.data.source
     if (source.kind === 'tool') return
+    // User-role messages carry any producer's kind; every non-human kind is a
+    // plugin injection, and the kind string itself names the producer.
+    const injected = source.kind !== 'user'
     this.appendSurfaceNode(event, {
       kind: 'user',
-      sourceKind: source.kind === 'plugin' ? 'plugin' : 'user',
-      pluginName: source.kind === 'plugin' ? source.plugin : undefined,
+      sourceKind: injected ? 'plugin' : 'user',
+      pluginName: injected ? source.kind : undefined,
       chars: contentChars(event.data.content),
     })
   }
@@ -522,12 +544,12 @@ export class SessionFolder {
     const node: SurfaceNode = { seq: event.seq, ...fields }
     const op = event.surfaceOp
     if (op !== undefined && typeof op === 'object') {
-      // op.start/op.end are SURFACE NODE SEQS, not array indices — the harness
-      // converts them with indexOf over its node list. Treating them as
+      // op.startSeq/op.endSeq are SURFACE NODE SEQS, not array indices — the
+      // harness converts them with indexOf over its node list. Treating them as
       // indices corrupts every post-compaction fold once seqs and indices
       // drift apart. Tolerant fallback: append when the range is already gone.
-      const startIndex = this.surface.findIndex(entry => entry.seq === op.start)
-      const endIndex = this.surface.findIndex(entry => entry.seq === op.end)
+      const startIndex = this.surface.findIndex(entry => entry.seq === op.startSeq)
+      const endIndex = this.surface.findIndex(entry => entry.seq === op.endSeq)
       if (startIndex !== -1 && endIndex !== -1) {
         const [lo, hi] = startIndex <= endIndex ? [startIndex, endIndex] : [endIndex, startIndex]
         this.surface.splice(lo, hi - lo + 1, node)
@@ -541,10 +563,19 @@ export class SessionFolder {
 
   // ------------------------------------------------------------------ header
 
+  /**
+   * The system prompt now travels as `system/message` events instead of the
+   * retired `request/header.system` field. Each event carries the CURRENT
+   * active prompt — a rewrite of the head node, or the series' first node;
+   * empty content clears it. Cover-assign, do not accumulate.
+   */
+  private onSystemMessage(event: SessionEvent<'system/message'>): void {
+    this.systemChars = contentChars(event.data.message.content)
+  }
+
   private onRequestHeader(event: SessionEvent<'request/header'>): void {
     const { header, reason } = event.data
     this.header = {
-      systemChars: header.system?.length ?? 0,
       toolsChars: header.tools === undefined ? 0 : contentChars(header.tools),
     }
     // Only an actual header CHANGE invalidates the provider prefix cache.

@@ -313,8 +313,11 @@ describe('selector error-code branches', () => {
       assert.throws(() => buildRule({ after_seconds: bad }, NOW),
         (error: unknown) => error instanceof ScheduledTaskError && error.code === 'invalid_rule')
     }
-    assert.throws(() => buildRule({ every_seconds: 299 }, NOW),
+    // dsh 0.1.7 lowered MIN_EVERY_INTERVAL_SECONDS from 300 to 60: sub-minute
+    // rules now reject, 299 became legal, and 59 still maps to the shipped code.
+    assert.throws(() => buildRule({ every_seconds: 59 }, NOW),
       (error: unknown) => error instanceof ScheduledTaskError && error.code === 'frequency_too_high')
+    assert.equal(buildRule({ every_seconds: 299 }, NOW)?.kind, 'every')
     assert.throws(() => buildRule({ every_seconds: 300.5 }, NOW),
       (error: unknown) => error instanceof ScheduledTaskError && error.code === 'invalid_rule')
   })

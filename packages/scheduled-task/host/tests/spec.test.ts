@@ -57,7 +57,8 @@ describe('scheduledTaskRecord schema', () => {
       { kind: 'weekly', weekdays: [], time: '09:00', time_zone: 'UTC', scheduledAt: 'x' },
       { kind: 'weekly', weekdays: [8], time: '09:00', time_zone: 'UTC', scheduledAt: 'x' },
       { kind: 'monthly', dayOfMonth: 32, time: '09:00', time_zone: 'UTC', scheduledAt: 'x' },
-      { kind: 'every', everySeconds: 299, scheduledAt: 'x' },
+      { kind: 'every', everySeconds: 59, scheduledAt: 'x' },
+      { kind: 'every', everySeconds: 300.5, scheduledAt: 'x' },
       { kind: 'unknown-kind', scheduledAt: 'x' },
     ]
     for (const rule of badRules) {

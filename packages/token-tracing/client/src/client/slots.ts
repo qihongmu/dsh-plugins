@@ -6,13 +6,13 @@ import type { TypertRemoteNamespaceMap } from '@deepseek-ai/dsh-typert-protocol'
 // Type-only: pulls the `conversation.view` SlotMap row (declared by the slot's
 // owning package) so the register call types.
 import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
-// Type-only: pulls the Remote assembly's `Context` merge (ctx.remote); the
-// tokenTracing namespace merge comes from the vendored
-// `@qihongmu/dsh-plugins-token-tracing/remote`.
+// Type-only: pulls the Remote assembly's `Context` merge (ctx.remote).
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
-import type {} from '@qihongmu/dsh-plugins-token-tracing/remote'
+// Type-only: the tokenTracing namespace merge lives in the sibling source
+// module (d.ts-side augmentation does not merge under the 0.1.7 dts layout).
+import type {} from './remote-namespace.ts'
 
 /** The typed `tokenTracing` Remote namespace the tab drives. */
 export type TokenTracingRemote = TypertRemoteNamespaceMap['tokenTracing']

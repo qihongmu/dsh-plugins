@@ -1,6 +1,6 @@
 {
   "name": "@qihongmu/dsh-plugins-scheduled-task-bundle",
-  "version": "0.1.1-alpha.2",
+  "version": "0.1.1-alpha.3",
   "license": "MIT",
   "author": "Qihong <qihong.m.u+dev@gmail.com>",
   "description": "Aggregate install bundle for the scheduled-task plugin: pulls the host/remotes/client halves and mounts all three with a single `dsh plugin add`.",

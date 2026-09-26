@@ -13,6 +13,9 @@ import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 // Type-only: widens `ctx.sessions` on `Context` (the M3 session deep link).
 import type {} from '@deepseek-ai/dsh-api-session-controller/client'
+// Type-only: widens `ctx.uiWorkspace` on `Context` — 0.1.7 moved session
+// navigation out of the sessions service ("navigation belongs to view owners").
+import type {} from '@deepseek-ai/dsh-client-ui-workspace/client'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 // Type-only: the renderer's `Context` merge provides `ctx.slots`.
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
@@ -41,9 +44,9 @@ export type { TokenDashboardFace, TokenTraceViewFace, TokenTracingRemote } from 
 /**
  * Required services: the slot system, locale, the Remote key, the
  * `remote.tokenTracing` namespace provided by the remotes assembly entry,
- * and the `sessions` service backing the dashboard's session deep link.
+ * and `uiWorkspace` backing the dashboard's session deep link.
  */
-export const inject = ['slots', 'locale', 'remote', 'remote.tokenTracing', 'sessions']
+export const inject = ['slots', 'locale', 'remote', 'remote.tokenTracing', 'uiWorkspace']
 
 /** Register the token-tracing tab and the M3 dashboard entry over the mounted Remote namespace. */
 export function apply(ctx: Context): void {
@@ -60,8 +63,8 @@ export function apply(ctx: Context): void {
     }),
   }, TokenTraceView))
   // M3 dashboard: sidebar footer trigger + full-page surface (see
-  // DashboardEntry). The deep link stages the session via the platform's
-  // `sessions` service; the rollup's session ids are plain strings, hence
+  // DashboardEntry). The deep link navigates via the platform's uiWorkspace
+  // service; the rollup's session ids are plain strings, hence
   // the single branded-id cast at this boundary.
   ctx.slots.inject('sidebar.footer.action', () => ctx.slots.register({
     name: 'sidebar.footer.action',
@@ -71,7 +74,7 @@ export function apply(ctx: Context): void {
     label: () => t('dashboard.title'),
     inject: (): TokenDashboardFace => ({
       remote: ctx.remote.tokenTracing,
-      openSession: (sessionId: string) => { ctx.sessions.open(sessionId as SessionId) },
+      openSession: (sessionId: string) => { ctx.uiWorkspace.openSession(sessionId as SessionId) },
     }),
   }, TokenDashboardEntry))
 }

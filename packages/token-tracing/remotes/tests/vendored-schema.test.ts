@@ -6,13 +6,13 @@
 
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import TYPERT_REMOTE from '../src/client/remote-client.js'
+import TYPERT_REMOTE from '@qihongmu/dsh-plugins-token-tracing/remote'
 import type { TurnTrace, TokenTraceFrame, SessionRollupView } from '@qihongmu/dsh-plugins-token-tracing/types'
 
 function resultSchema(method: string) {
   const descriptor = TYPERT_REMOTE.descriptors.find(entry => entry.method === method)
   assert.ok(descriptor !== undefined, `descriptor for ${method} missing`)
-  return descriptor.result.schema
+  return descriptor.result.create()
 }
 
 const turnTraceFixture = {

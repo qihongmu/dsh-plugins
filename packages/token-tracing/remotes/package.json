@@ -1,6 +1,6 @@
 {
   "name": "@qihongmu/dsh-client-remotes-token-tracing",
-  "version": "0.1.1",
+  "version": "0.1.2-alpha.1",
   "license": "MIT",
   "author": "Qihong <qihong.m.u+dev@gmail.com>",
   "repository": {
@@ -48,8 +48,7 @@
     "@deepseek-ai/cordis": "*",
     "@deepseek-ai/dsh-api-gateway": "*",
     "@deepseek-ai/dsh-api-remotes": "*",
-    "@deepseek-ai/dsh-typert-protocol": "*",
-    "@qihongmu/dsh-plugins-token-tracing": "*"
+    "@deepseek-ai/dsh-typert-protocol": "*"
   },
   "files": [
     "lib",

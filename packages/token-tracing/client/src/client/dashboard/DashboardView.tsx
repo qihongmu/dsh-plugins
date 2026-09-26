@@ -8,7 +8,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import { IconCloseOutline16, IconRefreshOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconCloseOutlineRegular, IconRefreshOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { DayRollupView, SessionRollupView } from '@qihongmu/dsh-plugins-token-tracing/types'
 import type { TokenTracingRemote } from '../slots.ts'
 import type { Translate } from '../translate.ts'
@@ -181,7 +181,7 @@ export function DashboardView({ remote, openSession, t, onClose }: DashboardView
           title={t('dashboard.refresh')}
           onClick={refresh}
         >
-          <IconRefreshOutline16 />
+          <IconRefreshOutlineRegular />
         </button>
         <button
           type="button"
@@ -190,7 +190,7 @@ export function DashboardView({ remote, openSession, t, onClose }: DashboardView
           title={t('dashboard.close')}
           onClick={onClose}
         >
-          <IconCloseOutline16 />
+          <IconCloseOutlineRegular />
         </button>
       </header>
       {error !== null

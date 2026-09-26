@@ -187,7 +187,7 @@ export function ScheduledTaskCreate({
           case 'after':
             return Number.isInteger(Number(afterSeconds)) && Number(afterSeconds) > 0
           case 'every':
-            return Number.isInteger(Number(everySeconds)) && Number(everySeconds) >= 300
+            return Number.isInteger(Number(everySeconds)) && Number(everySeconds) >= 60
         }
     }
   })()
@@ -347,7 +347,7 @@ export function ScheduledTaskCreate({
                 <input
                   className={css.textInput}
                   type="number"
-                  min={300}
+                  min={60}
                   value={everySeconds}
                   onChange={(event) => { setEverySeconds(event.target.value) }}
                 />

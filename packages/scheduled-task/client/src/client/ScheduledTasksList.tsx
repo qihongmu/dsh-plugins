@@ -6,8 +6,8 @@
 import { useState } from 'react'
 import type { ButtonHTMLAttributes, ReactNode } from 'react'
 import {
-  IconCloseOutline16, IconEditOutline16, IconPauseOutline16,
-  IconPlayOutline16, IconPlusOutline16, IconSearchOutline16, IconTrashOutline16,
+  IconCloseOutlineRegular, IconEditOutlineRegular, IconPauseOutlineRegular,
+  IconPlayOutlineRegular, IconPlusOutlineRegular, IconSearchOutlineRegular, IconTrashOutlineRegular,
   Tooltip,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
@@ -80,12 +80,12 @@ export function ScheduledTasksList({
         <h2 className={css.title}>{t('panel.title')}</h2>
         <div className={css.headActions}>
           <button type="button" className={css.primaryButton} onClick={onCreate}>
-            <IconPlusOutline16 size={14} />
+            <IconPlusOutlineRegular size={14} />
             <span>{t('action.create')}</span>
           </button>
           <Tooltip label={t('drawer.close')} side="bottom" delayMs={500}>
             <button type="button" className={css.closeButton} aria-label={t('drawer.close')} onClick={onClose}>
-              <IconCloseOutline16 size={16} />
+              <IconCloseOutlineRegular size={16} />
             </button>
           </Tooltip>
         </div>
@@ -93,7 +93,7 @@ export function ScheduledTasksList({
       <p className={css.subtitle}>{t('panel.subtitle')}</p>
       <div className={css.toolbar}>
         <label className={css.searchBox}>
-          <IconSearchOutline16 size={14} />
+          <IconSearchOutlineRegular size={14} />
           <input
             className={css.searchInput}
             value={search}
@@ -164,19 +164,19 @@ export function ScheduledTasksList({
                 <div className={css.rowActions}>
                   {task.status === 'active' && (
                     <RowAction label={t('action.pause')} disabled={busy} onClick={() => { onSetStatus(task, 'paused') }}>
-                      <IconPauseOutline16 size={14} />
+                      <IconPauseOutlineRegular size={14} />
                     </RowAction>
                   )}
                   {task.status === 'paused' && (
                     <RowAction label={t('action.resume')} disabled={busy} onClick={() => { onSetStatus(task, 'active') }}>
-                      <IconPlayOutline16 size={14} />
+                      <IconPlayOutlineRegular size={14} />
                     </RowAction>
                   )}
                   <RowAction label={t('action.edit')} disabled={busy} onClick={() => { onEdit(task) }}>
-                    <IconEditOutline16 size={14} />
+                    <IconEditOutlineRegular size={14} />
                   </RowAction>
                   <RowAction label={t('action.delete')} disabled={busy} onClick={() => { onDelete(task) }}>
-                    <IconTrashOutline16 size={14} />
+                    <IconTrashOutlineRegular size={14} />
                   </RowAction>
                 </div>
               </li>

@@ -1,6 +1,6 @@
 {
   "name": "@qihongmu/dsh-client-remotes-scheduled-task",
-  "version": "0.1.1-alpha.2",
+  "version": "0.1.1-alpha.3",
   "license": "MIT",
   "author": "Qihong <qihong.m.u+dev@gmail.com>",
   "repository": {
@@ -48,7 +48,6 @@
     "@deepseek-ai/cordis": "*",
     "@deepseek-ai/dsh-api-gateway": "*",
     "@deepseek-ai/dsh-api-remotes": "*",
-    "@qihongmu/dsh-plugins-scheduled-task": "*",
     "@deepseek-ai/dsh-typert-protocol": "*"
   },
   "files": [

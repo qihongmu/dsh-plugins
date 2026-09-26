@@ -20,7 +20,7 @@ type AnyEvent = {
   seq: number
   time: number
   data: Record<string, unknown>
-  surfaceOp?: 'append' | { op: 'replace'; start: number; end: number }
+  surfaceOp?: 'append' | { op: 'replace'; startSeq: number; endSeq: number }
 }
 
 function ev(type: string, data: Record<string, unknown>, extra: Partial<AnyEvent> = {}): AnyEvent {
@@ -46,6 +46,20 @@ function assistantMessage(text: string): Record<string, unknown> {
   }
 }
 
+function systemMessage(text: string): Record<string, unknown> {
+  return {
+    id: `sys-${seqCounter + 1}`,
+    role: 'system',
+    content: [{ type: 'text', text }],
+    source: { kind: 'system-prompt' },
+  }
+}
+
+/** Compact stream records carrying one usage chunk, as `assistant/attempt` embeds them. */
+function streamWithUsage(u: Record<string, number>): Record<string, unknown>[] {
+  return [{ type: 'chunk', time: BASE, chunk: { type: 'usage', usage: u } }]
+}
+
 function usage(inputTokens: number, outputTokens: number, totalTokens: number, extra: Record<string, number> = {}): Record<string, number> {
   return { inputTokens, outputTokens, totalTokens, ...extra }
 }
@@ -67,7 +81,8 @@ describe('single-step turn', () => {
   const events = [
     ev('turn/start', { turn: 1 }),
     ev('user/message', userMessage('Hello trace'), { surfaceOp: 'append' }),
-    ev('request/header', { header: { config: {}, system: 'S'.repeat(400) }, reason: 'initial' }),
+    ev('request/header', { header: { config: {} }, reason: 'initial' }),
+    ev('system/message', { turn: 1, step: 0, message: systemMessage('S'.repeat(400)) }),
     ev('step/start', { turn: 1, step: 0 }),
     ev('assistant/message', {
       turn: 1,
@@ -113,7 +128,8 @@ describe('multi-step tool loop', () => {
   const events: AnyEvent[] = [
     ev('turn/start', { turn: 2 }),
     ev('user/message', userMessage('Read the file'), { surfaceOp: 'append' }),
-    ev('request/header', { header: { config: {}, system: 'S'.repeat(200) }, reason: 'resume' }),
+    ev('request/header', { header: { config: {} }, reason: 'resume' }),
+    ev('system/message', { turn: 2, step: 0, message: systemMessage('S'.repeat(200)) }),
     ev('step/start', { turn: 2, step: 0 }),
     ev('assistant/message', {
       turn: 2,
@@ -183,13 +199,12 @@ describe('retry within one step', () => {
     ev('user/message', userMessage('Go'), { surfaceOp: 'append' }),
     ev('request/header', { header: { config: {} }, reason: 'initial' }),
     ev('step/start', { turn: 3, step: 0 }),
-    ev('assistant/chunk', { turn: 3, step: 0, chunk: { type: 'usage', usage: usage(50, 10, 60) } }),
+    ev('assistant/attempt', { turn: 3, step: 0, stream: streamWithUsage(usage(50, 10, 60)) }),
     ev('llm/retry', {
       retryId: 'r1', turn: 3, step: 0, provider: 'deepseek', mode: 'normal', policyKey: 'p',
       retry: 1, maxRetries: 3, delayMs: 100, failure: { code: 'RATE_LIMIT', message: 'slow down' },
     }),
     ev('llm/retry-started', { retryId: 'r1', turn: 3, step: 0, retry: 1 }),
-    ev('assistant/chunk', { turn: 3, step: 0, chunk: { type: 'usage', usage: usage(55, 12, 70) } }),
     ev('assistant/message', {
       turn: 3, step: 0, message: assistantMessage('ok'), usage: usage(55, 12, 70),
     }, { surfaceOp: 'append' }),
@@ -243,7 +258,8 @@ describe('mid-turn compaction', () => {
   // discriminates seq semantics from the naive array-index reading (which
   // would leave the shadowed nodes in place).
   const userEv = ev('user/message', userMessage('Long task'), { surfaceOp: 'append' })
-  const headerEv = ev('request/header', { header: { config: {}, system: 'S'.repeat(100) }, reason: 'initial' })
+  const headerEv = ev('request/header', { header: { config: {} }, reason: 'initial' })
+  const systemEv = ev('system/message', { turn: 5, step: 0, message: systemMessage('S'.repeat(100)) })
   const stepStartEv = ev('step/start', { turn: 5, step: 0 })
   const assistantEv = ev('assistant/message', {
     turn: 5, step: 0, message: assistantMessage('working'), usage: usage(100, 10, 110),
@@ -264,6 +280,7 @@ describe('mid-turn compaction', () => {
     ev('turn/start', { turn: 5 }),
     userEv,
     headerEv,
+    systemEv,
     stepStartEv,
     assistantEv,
     toolCallEv,
@@ -281,8 +298,8 @@ describe('mid-turn compaction', () => {
       model: 'deepseek-chat',
       usage: usage(90, 40, 130),
     }),
-    ev('user/message', userMessage('summary so far', { kind: 'plugin', plugin: 'compaction' }), {
-      surfaceOp: { op: 'replace', start: userEv.seq, end: toolResultEv.seq },
+    ev('user/message', userMessage('summary so far', { kind: 'compact-checkpoint' }), {
+      surfaceOp: { op: 'replace', startSeq: userEv.seq, endSeq: toolResultEv.seq },
     }),
     ev('compaction/end', { compactionId: 'cp1', turn: 5 }),
     ev('step/start', { turn: 5, step: 1 }),
@@ -357,14 +374,16 @@ describe('cross-turn diff on a clean boundary', () => {
   const events: AnyEvent[] = [
     ev('turn/start', { turn: 8 }),
     ev('user/message', userMessage('first'), { surfaceOp: 'append' }),
-    ev('request/header', { header: { config: {}, system: 'S'.repeat(100) }, reason: 'initial' }),
+    ev('request/header', { header: { config: {} }, reason: 'initial' }),
+    ev('system/message', { turn: 8, step: 0, message: systemMessage('S'.repeat(100)) }),
     ev('assistant/message', {
       turn: 8, step: 0, message: assistantMessage('ok'), usage: usage(100, 10, 110),
     }, { surfaceOp: 'append' }),
     ev('turn/end', { turn: 8, reason: { kind: 'completed' } }),
     ev('turn/start', { turn: 9 }),
     ev('user/message', userMessage('follow-up question'), { surfaceOp: 'append' }),
-    ev('request/header', { header: { config: {}, system: 'S'.repeat(100) }, reason: 'series', startsSeries: true }),
+    ev('request/header', { header: { config: {} }, reason: 'series', startsSeries: true }),
+    ev('system/message', { turn: 9, step: 0, message: systemMessage('S'.repeat(100)) }),
     ev('step/start', { turn: 9, step: 0 }),
     ev('assistant/message', {
       turn: 9, step: 0, message: assistantMessage('answer'), usage: usage(120, 12, 132),
@@ -392,13 +411,15 @@ describe('header change invalidates the cache', () => {
   const events: AnyEvent[] = [
     ev('turn/start', { turn: 10 }),
     ev('user/message', userMessage('go'), { surfaceOp: 'append' }),
-    ev('request/header', { header: { config: {}, system: 'A' }, reason: 'initial' }),
+    ev('request/header', { header: { config: {} }, reason: 'initial' }),
+    ev('system/message', { turn: 10, step: 0, message: systemMessage('A') }),
     ev('step/start', { turn: 10, step: 0 }),
     ev('assistant/message', {
       turn: 10, step: 0, message: assistantMessage('one'), usage: usage(100, 10, 110, { cacheReadTokens: 95 }),
     }, { surfaceOp: 'append' }),
     ev('step/end', { turn: 10, step: 0 }),
-    ev('request/header', { header: { config: {}, system: 'B'.repeat(300) }, reason: 'change', startsSeries: true }),
+    ev('request/header', { header: { config: {} }, reason: 'change', startsSeries: true }),
+    ev('system/message', { turn: 10, step: 1, message: systemMessage('B'.repeat(300)) }),
     ev('step/start', { turn: 10, step: 1 }),
     ev('assistant/message', {
       turn: 10, step: 1, message: assistantMessage('two'), usage: usage(200, 10, 220, { cacheReadTokens: 0 }),
@@ -427,7 +448,8 @@ describe('resume header does NOT invalidate the cache', () => {
   const events: AnyEvent[] = [
     ev('turn/start', { turn: 14 }),
     ev('user/message', userMessage('first'), { surfaceOp: 'append' }),
-    ev('request/header', { header: { config: {}, system: 'A'.repeat(100) }, reason: 'initial' }),
+    ev('request/header', { header: { config: {} }, reason: 'initial' }),
+    ev('system/message', { turn: 14, step: 0, message: systemMessage('A'.repeat(100)) }),
     ev('step/start', { turn: 14, step: 0 }),
     ev('assistant/message', {
       turn: 14, step: 0, message: assistantMessage('one'), usage: usage(100, 10, 110, { cacheReadTokens: 95 }),
@@ -437,7 +459,8 @@ describe('resume header does NOT invalidate the cache', () => {
     // Process restart: the same header is re-established with reason 'resume'.
     ev('turn/start', { turn: 15 }),
     ev('user/message', userMessage('after restart'), { surfaceOp: 'append' }),
-    ev('request/header', { header: { config: {}, system: 'A'.repeat(100) }, reason: 'resume' }),
+    ev('request/header', { header: { config: {} }, reason: 'resume' }),
+    ev('system/message', { turn: 15, step: 0, message: systemMessage('A'.repeat(100)) }),
     ev('step/start', { turn: 15, step: 0 }),
     ev('assistant/message', {
       turn: 15, step: 0, message: assistantMessage('two'), usage: usage(120, 10, 130, { cacheReadTokens: 110 }),
@@ -461,7 +484,8 @@ describe('cache-read drop invalidates the cache (rule b)', () => {
   const events: AnyEvent[] = [
     ev('turn/start', { turn: 16 }),
     ev('user/message', userMessage('go'), { surfaceOp: 'append' }),
-    ev('request/header', { header: { config: {}, system: 'A'.repeat(100) }, reason: 'initial' }),
+    ev('request/header', { header: { config: {} }, reason: 'initial' }),
+    ev('system/message', { turn: 16, step: 0, message: systemMessage('A'.repeat(100)) }),
     ev('step/start', { turn: 16, step: 0 }),
     ev('assistant/message', {
       turn: 16, step: 0, message: assistantMessage('one'), usage: usage(100, 10, 110, { cacheReadTokens: 95 }),
@@ -504,7 +528,7 @@ describe('zero-attempt turns are not traced', () => {
 describe('injected context attribution', () => {
   const events: AnyEvent[] = [
     ev('turn/start', { turn: 13 }),
-    ev('user/message', userMessage('skill content', { kind: 'plugin', plugin: 'skills' }), { surfaceOp: 'append' }),
+    ev('user/message', userMessage('skill content', { kind: 'skills' }), { surfaceOp: 'append' }),
     ev('request/header', { header: { config: {} }, reason: 'initial' }),
     ev('assistant/message', {
       turn: 13, step: 0, message: assistantMessage('ok'), usage: usage(60, 4, 64),

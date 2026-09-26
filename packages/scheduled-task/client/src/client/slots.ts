@@ -6,12 +6,12 @@ import type { TypertRemoteNamespaceMap } from '@deepseek-ai/dsh-typert-protocol'
 // Type-only: pulls the `sidebar.footer.action` SlotMap owner poll (the `wide` prop).
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
 // Type-only: pulls the Remote assembly's `Context` merge (ctx.remote) and the
-// first-party namespace merges (`session`, read for the model catalog); the
-// scheduledTasks namespace merge comes from the vendored
-// `@qihongmu/dsh-plugins-scheduled-task/remote`.
+// first-party namespace merges (`session`, read for the model catalog).
 import type {} from '@deepseek-ai/dsh-api-remotes/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type {} from '@qihongmu/dsh-plugins-scheduled-task/remote'
+// Type-only: the scheduledTasks namespace merge lives in the sibling source
+// module (d.ts-side augmentation does not merge under the 0.1.7 dts layout).
+import type {} from './remote-namespace.ts'
 
 /** The typed `scheduledTasks` Remote namespace the panel drives. */
 export type ScheduledTasksRemote = TypertRemoteNamespaceMap['scheduledTasks']

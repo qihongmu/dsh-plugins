@@ -10,6 +10,13 @@
 //   packages/<plugin>/remotes/src/client/remote-client.{js,d.ts}
 // Keep their package-scope imports pointing at the host package name, and keep
 // their zod schemas in sync with host/src/types.ts.
+//
+// 0.1.7 note: the vendored artifacts must use the lazy `create()` codec
+// factory (a bare `schema:` field fails `typert-registry`'s mount validation),
+// and the client-side TypertRemoteNamespaceMap augmentation lives in the
+// client half's `src/client/remote-namespace.ts` — a d.ts reached through a
+// `paths` substitution no longer merges its `declare module` block (see
+// FEASIBILITY.md for the 0.1.7 fake-workspace attempt and its outcome).
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { dshPath, resolveDshRoot } from './lib/dsh-root.mjs'
